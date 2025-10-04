@@ -2,25 +2,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug FastAPI Backend",
-            "type": "debugpy",
+            "name": "Debug Node.js Backend",
+            "type": "node",
             "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "app.main:app",
-                "--host", "localhost",
-                "--port", "8000",
-                "--reload"
-            ],
+            "program": "${workspaceFolder}/backend/server.js",
             "cwd": "${workspaceFolder}/backend",
-            "python": "${workspaceFolder}/backend/venv/Scripts/python.exe",
             "console": "integratedTerminal",
-            "autoReload": {
-                "enable": true
-            },
+            "autoAttachChildProcesses": true,
+            "restart": true,
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/backend"
+                "NODE_ENV": "development"
             }
+        },
+        {
+            "name": "Debug Frontend",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/frontend/node_modules/.bin/vue-cli-service",
+            "args": ["serve"],
+            "cwd": "${workspaceFolder}/frontend",
+            "console": "integratedTerminal",
+            "autoAttachChildProcesses": true,
+            "restart": true
         }
     ]
 }
