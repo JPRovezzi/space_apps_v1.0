@@ -31,8 +31,8 @@ export default {
   name: 'MapView',
   data() {
     return {
-      zoom: 7,
-      center: [-30.2, -63.8], // Centro aproximado de la provincia de Córdoba
+      zoom: 5,
+      center: [-31.0, -62.0], // Centro aproximado de la provincia de Córdoba
       cordobaGeoJson: cordobaGeoJson,
       map: null,
       geoJsonLayer: null
@@ -53,7 +53,14 @@ export default {
       if (mapContainer) {
         this.map = L.map(mapContainer, {
           center: this.center,
-          zoom: this.zoom
+          zoom: this.zoom,
+          minZoom: 4,  // Zoom mínimo para evitar alejarse demasiado
+          maxZoom: 12, // Zoom máximo para evitar acercarse demasiado
+          maxBounds: [
+            [-26.0, -56.0], // Esquina noroeste (con margen)
+            [-36.0, -68.0]  // Esquina sureste (con margen)
+          ],
+          maxBoundsViscosity: 1.0 // Hace que los límites sean estrictos
         })
 
       // Añadir capa de tiles
@@ -72,6 +79,11 @@ export default {
         },
         onEachFeature: this.onEachFeature
       }).addTo(this.map)
+
+      // Ajustar el mapa a los límites de Córdoba
+      this.map.fitBounds(this.geoJsonLayer.getBounds(), {
+        padding: [20, 20] // Añadir un poco de padding
+      })
       }
     },
     onEachFeature(feature, layer) {
