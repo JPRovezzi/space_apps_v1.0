@@ -24,6 +24,9 @@
       <router-link to="/analysis" class="btn-primary">
         🚀 Iniciar Análisis
       </router-link>
+      <router-link to="/map" class="btn-secondary">
+        🗺️ Ver Mapa
+      </router-link>
     </div>
   </div>
 </template>
@@ -104,6 +107,10 @@ export default {
 
 .navigation {
   margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .btn-primary {
@@ -128,6 +135,29 @@ export default {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 16px 32px;
+  text-decoration: none;
+  border-radius: 50px;
+  display: inline-block;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: 2.5rem;
@@ -140,6 +170,17 @@ export default {
 
   .feature-card {
     padding: 1.5rem;
+  }
+
+  .navigation {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 12px 24px;
+    font-size: 1rem;
   }
 }
 </style>
