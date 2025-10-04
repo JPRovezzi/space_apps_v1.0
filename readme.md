@@ -8,13 +8,13 @@ Aplicación web para análisis de datos espaciales con Machine Learning, desarro
 - **Análisis de Subíndices Normalizados**: Procesamiento de datos espaciales con algoritmos ML
 - **Interfaz Moderna**: Frontend Vue.js 3 con diseño responsive
 - **API REST**: Backend FastAPI con documentación automática
-- **Machine Learning**: Integración con scikit-learn para normalización de datos
+- **Data Processing**: Normalización de datos con NumPy
 - **Visualización**: Gráficos interactivos con Chart.js
 
 ## 🛠️ Tecnologías
 
 - **Frontend**: Vue.js 3 + Vue Router + Vuex + Axios
-- **Backend**: Python FastAPI + scikit-learn + pandas
+- **Backend**: Python FastAPI + NumPy
 - **UI**: Vuetify + CSS3 con diseño NASA-inspired
 - **Desarrollo**: Hot reload, proxy automático, linting
 
