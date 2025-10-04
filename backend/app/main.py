@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import json
 import csv
 import io
+import os
 from cachetools import TTLCache
 
 # Cache para datos de NASA (1 hora TTL para respetar límites de API)
@@ -94,10 +95,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configurar CORS para frontend local
+# Configurar CORS
+cors_origins = [
+    "http://localhost:8080",  # Desarrollo local
+]
+
+# Agregar orígenes de producción si estamos en producción
+if os.getenv("ENVIRONMENT") == "production":
+    cors_origins.extend([
+        "https://cometatres.us",
+        "https://www.cometatres.us",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],  # Puerto de Vue
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
