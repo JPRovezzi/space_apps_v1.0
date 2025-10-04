@@ -1,0 +1,11 @@
+{
+    "python.defaultInterpreterPath": "./backend/venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "files.associations": {
+        "*.py": "python"
+    },
+    "debug.openDebug": "openOnDebugBreak"
+}
