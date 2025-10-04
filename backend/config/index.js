@@ -34,7 +34,7 @@ const config = {
   // External APIs (for space data)
   external: {
     nasa: {
-      apiKey: process.env.NASA_API_KEY,
+      apiKey: "6Ra3EH6XjH0gZ8qb7hPKfofq21JIHiaMO0kkuJ5r", // NASA API Key
       baseUrl: "https://api.nasa.gov",
       firmsBaseUrl: "https://firms.modaps.eosdis.nasa.gov/api/",
       cmrBaseUrl: "https://cmr.earthdata.nasa.gov/search/",

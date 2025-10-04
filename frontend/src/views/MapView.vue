@@ -441,10 +441,13 @@ export default {
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
 
         // Hacer una petición simple para verificar conexión
-        const response = await fetch("/api/v1/nasa/health", {
-          method: "GET",
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          "http://localhost:3000/api/v1/nasa/health",
+          {
+            method: "GET",
+            signal: controller.signal,
+          }
+        );
 
         clearTimeout(timeoutId);
         this.nasaApiConnected = response.ok;
