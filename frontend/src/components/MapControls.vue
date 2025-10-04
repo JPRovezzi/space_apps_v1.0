@@ -24,9 +24,12 @@
       <!-- Info de Incendios -->
       <div class="control-info">
         <span class="info-icon">🔥</span>
-        <span class="info-text"
-          >{{ fireIncidentsCount }} incendios en {{ selectedYear }}</span
-        >
+        <span class="info-text">
+          {{ fireIncidentsCount }} incendios ({{
+            formatDateRange(dateRange.start)
+          }}
+          - {{ formatDateRange(dateRange.end) }})
+        </span>
       </div>
     </div>
 
@@ -40,6 +43,37 @@
         <span class="control-icon">🎯</span>
         <span class="control-text">Centrar Córdoba</span>
       </button>
+    </div>
+  </div>
+
+  <!-- Controles de Fecha -->
+  <div class="date-range-controls">
+    <div class="date-input-group">
+      <label class="date-label">Desde:</label>
+      <input
+        type="date"
+        :value="dateRange.start"
+        @input="
+          $emit('update-date-range', {
+            ...dateRange,
+            start: $event.target.value,
+          })
+        "
+        class="date-input"
+        title="Seleccionar fecha inicial"
+      />
+    </div>
+    <div class="date-input-group">
+      <label class="date-label">Hasta:</label>
+      <input
+        type="date"
+        :value="dateRange.end"
+        @input="
+          $emit('update-date-range', { ...dateRange, end: $event.target.value })
+        "
+        class="date-input"
+        title="Seleccionar fecha final"
+      />
     </div>
   </div>
 </template>
@@ -56,12 +90,32 @@ export default {
       type: Number,
       default: 0,
     },
-    selectedYear: {
-      type: Number,
+    dateRange: {
+      type: Object,
       required: true,
+      validator: (value) => {
+        return (
+          value &&
+          typeof value.start === "string" &&
+          typeof value.end === "string"
+        );
+      },
     },
   },
-  emits: ["toggle-zoom-lock", "fit-bounds"],
+  emits: ["toggle-zoom-lock", "fit-bounds", "update-date-range"],
+  methods: {
+    formatDateRange(dateString) {
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("es-ES", {
+          month: "short",
+          year: "numeric",
+        });
+      } catch {
+        return dateString;
+      }
+    },
+  },
 };
 </script>
 
@@ -182,6 +236,77 @@ export default {
   }
 }
 
+/* Controles de Fecha */
+.date-range-controls {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 8px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 1rem;
+}
+
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.date-input {
+  padding: 6px 8px;
+  border: 1px solid #e1e8ed;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.85rem;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.date-input:hover {
+  border-color: #bdc3c7;
+}
+
+@media (max-width: 768px) {
+  .date-range-controls {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 15px;
+    margin: 0 0.5rem;
+  }
+
+  .date-input-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .date-label {
+    font-size: 0.8rem;
+  }
+
+  .date-input {
+    flex: 1;
+    max-width: 140px;
+  }
+}
+
 @media (max-width: 480px) {
   .map-controls-bar {
     padding: 8px 12px;
@@ -190,6 +315,26 @@ export default {
 
   .control-info {
     display: none; /* Ocultar info de incendios en pantallas muy pequeñas */
+  }
+
+  .date-range-controls {
+    padding: 8px 12px;
+    margin: 0 0.25rem;
+  }
+
+  .date-input-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .date-label {
+    font-size: 0.75rem;
+  }
+
+  .date-input {
+    width: 100%;
+    max-width: none;
   }
 }
 </style>

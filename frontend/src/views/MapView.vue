@@ -6,9 +6,10 @@
     <MapControls
       :zoom-locked="zoomLocked"
       :fire-incidents-count="visibleFireIncidentsCount"
-      :selected-year="selectedYear"
+      :date-range="dateRange"
       @toggle-zoom-lock="toggleZoomLock"
       @fit-bounds="fitToCordobaBounds"
+      @update-date-range="onDateRangeChange"
     />
 
     <div class="map-container">
@@ -48,119 +49,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Estadísticas de incendios -->
-          <div v-if="hasActiveFireLayers" class="fire-stats">
-            <div v-if="fireStats.error" class="offline-banner">
-              🔌 Backend desconectado - Sin datos científicos disponibles
-            </div>
-            <h4 class="stats-title">
-              📊 Estadísticas
-              <span v-if="fireStats.error" class="error-badge"
-                >❌ Sin conexión</span
-              >
-              <span
-                v-else-if="fireStats.dataSource === 'NASA FIRMS'"
-                class="nasa-badge"
-                >🛰️ NASA Real</span
-              >
-            </h4>
-            <div class="stat-item">
-              <span class="stat-label">Incendios {{ selectedYear }}:</span>
-              <span
-                class="stat-value"
-                :data-empty="fireStats.currentYearFires === null"
-              >
-                {{
-                  fireStats.currentYearFires !== null
-                    ? fireStats.currentYearFires
-                    : "—"
-                }}
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Área afectada:</span>
-              <span
-                class="stat-value"
-                :data-empty="fireStats.burnedArea === null"
-              >
-                {{
-                  fireStats.burnedArea !== null
-                    ? fireStats.burnedArea + " ha"
-                    : "—"
-                }}
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Promedio histórico:</span>
-              <span
-                class="stat-value"
-                :data-empty="fireStats.avgFiresPerYear === null"
-              >
-                {{
-                  fireStats.avgFiresPerYear !== null
-                    ? fireStats.avgFiresPerYear + "/año"
-                    : "—"
-                }}
-              </span>
-            </div>
-
-            <!-- Información adicional sobre fuente de datos -->
-            <div
-              v-if="!fireStats.error && fireStats.dataSource === 'NASA FIRMS'"
-              class="data-info"
-            >
-              <div class="info-item">
-                <span class="info-label">📡 Fuente:</span>
-                <span class="info-value">{{ fireStats.dataSource }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">🔬 Confianza:</span>
-                <span class="info-value">{{ fireStats.confidence }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">⏰ Última actualización:</span>
-                <span class="info-value">{{
-                  formatLastUpdate(fireStats.lastUpdated)
-                }}</span>
-              </div>
-            </div>
-
-            <!-- Información de incendios visualizados -->
-            <div v-if="hasActiveFireLayers" class="visualization-info">
-              <div class="info-item">
-                <span class="info-label">🔥 Visualizados:</span>
-                <span class="info-value"
-                  >{{ visibleFireIncidentsCount }} puntos</span
-                >
-              </div>
-            </div>
-
-            <!-- Información adicional en modo offline -->
-            <div v-if="fireStats.error" class="data-info">
-              <div class="info-item">
-                <span class="info-label">📡 Fuente:</span>
-                <span class="info-value">{{ fireStats.dataSource }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">🔬 Estado:</span>
-                <span class="info-value">{{ fireStats.confidence }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">⏰ Datos:</span>
-                <span class="info-value">No disponibles</span>
-              </div>
-            </div>
-
-            <div v-if="fireStats.error" class="error-info">
-              <div class="error-message">
-                🔌 Backend desconectado
-                <br /><small>Para ver datos reales de NASA, ejecute:</small>
-                <br /><code class="command">cd backend && python run.py</code>
-                <br /><small>{{ fireStats.error }}</small>
-              </div>
-            </div>
-          </div>
         </div>
       </aside>
 
@@ -174,7 +62,7 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import cordobaGeoJson from "../assets/data/cordoba-province.js";
-import { nasaAPI } from "../services/api.js";
+import { simulatedFireIncidents } from "../assets/data/simulated-fire-incidents.js";
 import MainHeader from "../components/MainHeader.vue";
 import MapControls from "../components/MapControls.vue";
 
@@ -200,6 +88,7 @@ export default {
       map: null,
       cordobaLayer: null, // Referencia a la capa de Córdoba
       sidebarCollapsed: false,
+      isZooming: false, // Flag para evitar operaciones de capa durante zoom
       layers: [
         {
           id: "cordoba-province",
@@ -242,44 +131,39 @@ export default {
           description: "Línea trazada",
         },
         {
-          id: "nasa-fire",
-          name: "Incendios NASA",
+          id: "simulated-fire",
+          name: "Incendios Simulados",
           visible: true,
           layerRef: null,
-          type: "nasa-fire",
+          type: "simulated-fire",
           icon: "🔥",
-          description: "Puntos de incendio detectados",
+          description: "Datos de ejemplo para desarrollo",
         },
       ],
-      selectedYear: new Date().getFullYear(),
-      zoomLocked: true, // Por defecto zoom bloqueado en Córdoba
-      fireStats: {
-        currentYearFires: 0,
-        burnedArea: 0,
-        avgFiresPerYear: 0,
-        isSimulated: false,
-        error: null,
-        dataSource: "No disponible",
-        lastUpdated: null,
-        confidence: null,
+      dateRange: {
+        start: "2024-01-01",
+        end: "2024-12-31",
       },
-      fireIncidents: [],
+      zoomLocked: false, // Por defecto zoom bloqueado en Córdoba
+      simulatedFireIncidents: [],
+      filteredSimulatedIncidents: [],
     };
   },
   computed: {
     hasActiveFireLayers() {
       return this.layers.some(
-        (layer) => layer.type === "nasa-fire" && layer.visible
+        (layer) => layer.type === "simulated-fire" && layer.visible
       );
     },
     visibleFireIncidentsCount() {
-      return this.fireIncidents.length;
+      return this.layers.find((l) => l.id === "simulated-fire")?.visible
+        ? this.filteredSimulatedIncidents.length
+        : 0;
     },
   },
   mounted() {
     this.initMap();
-    this.loadFireStats();
-    this.loadFireIncidents();
+    this.loadSimulatedFireIncidents(); // Cargar datos simulados
   },
   beforeUnmount() {
     if (this.map) {
@@ -363,6 +247,22 @@ export default {
           padding: [0, 0], // Sin padding para ajuste perfecto al ancho del polígono
         });
 
+        // Agregar listeners para detectar animaciones de zoom
+        this.map.on("zoomstart", () => {
+          this.isZooming = true;
+        });
+        this.map.on("zoomend", () => {
+          this.isZooming = false;
+          // Actualizar capa de incendios simulados después del zoom si está visible
+          const simulatedLayer = this.layers.find(
+            (l) => l.id === "simulated-fire"
+          );
+
+          if (simulatedLayer?.visible) {
+            this.updateSimulatedFireLayer();
+          }
+        });
+
         // Crear elementos del mapa y almacenar referencias
         this.createMapElements();
 
@@ -378,7 +278,10 @@ export default {
       if (layer) {
         layer.visible = !layer.visible;
 
-        if (layer.layerRef) {
+        // Para capas de incendios simulados
+        if (layer.type === "simulated-fire") {
+          this.updateSimulatedFireLayer();
+        } else if (layer.layerRef) {
           // Manejo normal para otras capas
           if (layer.visible) {
             layer.layerRef.addTo(this.map);
@@ -388,9 +291,22 @@ export default {
         }
       }
     },
-    onYearChange() {
-      this.loadFireStats(); // Recargar estadísticas para el nuevo año
-      this.loadFireIncidents(); // Recargar puntos de incendio para el nuevo año
+    onDateRangeChange(newRange) {
+      // Validar que la fecha inicial no sea posterior a la final
+      if (new Date(newRange.start) > new Date(newRange.end)) {
+        console.warn("Fecha inicial no puede ser posterior a la fecha final");
+        return;
+      }
+
+      this.dateRange = newRange;
+
+      // Recargar datos filtrados si la capa está activa y no hay zoom
+      if (
+        this.layers.find((l) => l.id === "simulated-fire")?.visible &&
+        !this.isZooming
+      ) {
+        this.loadSimulatedFireIncidents();
+      }
     },
     toggleZoomLock() {
       this.zoomLocked = !this.zoomLocked;
@@ -429,57 +345,41 @@ export default {
         this.map.options.maxBoundsViscosity = 0.0;
       }
     },
-    async loadFireStats() {
-      try {
-        const response = await nasaAPI.getFireStats(this.selectedYear);
-        this.fireStats = {
-          currentYearFires: response.total_fires || 0,
-          burnedArea: response.total_burned_area_ha || 0,
-          avgFiresPerYear: (response.avg_fires_per_month || 0) * 12,
-          isSimulated: false,
-          dataSource: response.data_source || "NASA FIRMS",
-          lastUpdated: response.last_updated || null,
-          confidence: response.confidence || null,
-          error: null,
-        };
-      } catch (error) {
-        this.fireStats = {
-          currentYearFires: null,
-          burnedArea: null,
-          avgFiresPerYear: null,
-          isSimulated: false,
-          error: "Backend no disponible",
-          dataSource: "No disponible",
-          lastUpdated: null,
-          confidence: null,
-        };
-      }
+    filterIncidentsByDateRange(incidents, startDate, endDate) {
+      return incidents.filter((incident) => {
+        const incidentDate = new Date(incident.acq_date);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        return incidentDate >= start && incidentDate <= end;
+      });
     },
-    async loadFireIncidents() {
-      try {
-        const response = await nasaAPI.getFireIncidents(this.selectedYear);
-        this.fireIncidents = response.incidents || [];
-        this.updateFireLayer();
-      } catch (error) {
-        console.warn("Error loading fire incidents:", error);
-        this.fireIncidents = [];
-        this.updateFireLayer();
-      }
+    loadSimulatedFireIncidents() {
+      // Cargar y filtrar datos simulados por rango de fechas
+      this.simulatedFireIncidents = simulatedFireIncidents;
+      this.filteredSimulatedIncidents = this.filterIncidentsByDateRange(
+        this.simulatedFireIncidents,
+        this.dateRange.start,
+        this.dateRange.end
+      );
+      this.updateSimulatedFireLayer();
     },
-    updateFireLayer() {
-      const fireLayer = this.layers.find((l) => l.id === "nasa-fire");
-      if (!fireLayer) return;
+    updateSimulatedFireLayer() {
+      const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
+      if (!simulatedLayer) return;
+
+      // Evitar operaciones de capa durante animaciones de zoom
+      if (this.isZooming) return;
 
       // Limpiar layer existente
-      if (fireLayer.layerRef) {
-        this.map.removeLayer(fireLayer.layerRef);
+      if (simulatedLayer.layerRef) {
+        this.map.removeLayer(simulatedLayer.layerRef);
       }
 
-      // Crear nuevo layer group para incendios
-      const fireLayerGroup = L.layerGroup();
+      // Crear nuevo layer group para incendios simulados
+      const simulatedLayerGroup = L.layerGroup();
 
-      // Agregar marcadores para cada incendio
-      this.fireIncidents.forEach((incident) => {
+      // Agregar marcadores para cada incendio simulado filtrado
+      this.filteredSimulatedIncidents.forEach((incident) => {
         const marker = L.marker([incident.latitude, incident.longitude], {
           icon: L.divIcon({
             className: "fire-marker",
@@ -489,10 +389,10 @@ export default {
           }),
         });
 
-        // Popup con información del incendio
+        // Popup con información del incendio simulado
         const popupContent = `
           <div class="fire-popup">
-            <h4>🔥 Incendio Detectado</h4>
+            <h4>🔥 Incendio Simulado</h4>
             <p><strong>Fecha:</strong> ${incident.acq_date}</p>
             <p><strong>Hora:</strong> ${incident.acq_time}</p>
             <p><strong>Confianza:</strong> ${incident.confidence}%</p>
@@ -501,18 +401,19 @@ export default {
             <p><strong>Día/Noche:</strong> ${
               incident.daynight === "D" ? "Día" : "Noche"
             }</p>
+            <p style="color: #ff6b35; font-style: italic;"><strong>📝 Datos de ejemplo</strong></p>
           </div>
         `;
 
         marker.bindPopup(popupContent);
-        fireLayerGroup.addLayer(marker);
+        simulatedLayerGroup.addLayer(marker);
       });
 
-      fireLayer.layerRef = fireLayerGroup;
+      simulatedLayer.layerRef = simulatedLayerGroup;
 
       // Agregar al mapa si la capa está visible
-      if (fireLayer.visible && this.map) {
-        fireLayerGroup.addTo(this.map);
+      if (simulatedLayer.visible && this.map) {
+        simulatedLayerGroup.addTo(this.map);
       }
     },
     formatLastUpdate(timestamp) {
@@ -981,197 +882,6 @@ export default {
   box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.2);
 }
 
-.year-control {
-  margin-bottom: 1rem;
-}
-
-.year-slider {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.2);
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.year-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #0369a1;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.year-slider::-webkit-slider-thumb:hover {
-  background: #0284c7;
-  transform: scale(1.1);
-}
-
-.year-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #0369a1;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.fire-stats {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.stats-title {
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.error-badge {
-  font-size: 0.75rem;
-  background: rgba(239, 68, 68, 0.9);
-  color: #ffffff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-weight: bold;
-  border: 1px solid rgba(239, 68, 68, 1);
-}
-
-.nasa-badge {
-  font-size: 0.75rem;
-  background: rgba(34, 197, 94, 0.8);
-  color: #ffffff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-weight: normal;
-  border: 1px solid rgba(34, 197, 94, 1);
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.stat-item:last-child {
-  border-bottom: none;
-}
-
-.stat-label {
-  color: #ffffff;
-  font-size: 0.85rem;
-  opacity: 1;
-  font-weight: 500;
-}
-
-.stat-value {
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: bold;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  min-width: 60px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.stat-value[data-empty="true"] {
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.1);
-  font-style: italic;
-  font-weight: normal;
-}
-
-/* Información de fuente de datos */
-.data-info,
-.visualization-info {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.25rem 0;
-  font-size: 0.8rem;
-}
-
-.info-label {
-  color: #ffffff;
-  opacity: 0.8;
-  font-weight: 500;
-}
-
-.info-value {
-  color: #ffffff;
-  font-weight: bold;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-size: 0.75rem;
-}
-
-/* Información de error */
-.error-info {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 6px;
-}
-
-.error-message {
-  color: #ffffff;
-  text-align: center;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.command {
-  background: rgba(0, 0, 0, 0.3);
-  color: #ffffff;
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-family: "Courier New", monospace;
-  font-size: 0.75rem;
-  font-weight: bold;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.offline-banner {
-  background: rgba(239, 68, 68, 0.9);
-  color: #ffffff;
-  padding: 0.5rem;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  border: 2px solid rgba(239, 68, 68, 0.3);
-}
-
 /* Fire layer highlighting */
 .layer-item[data-fire-layer="true"] {
   position: relative;
@@ -1192,14 +902,12 @@ export default {
 
 /* Responsive adjustments for fire controls */
 @media (max-width: 768px) {
-  .time-controls,
-  .fire-stats {
+  .time-controls {
     padding: 0.75rem;
     margin-top: 0.75rem;
   }
 
-  .time-title,
-  .stats-title {
+  .time-title {
     font-size: 0.9rem;
   }
 
@@ -1210,11 +918,6 @@ export default {
   .date-input {
     font-size: 0.8rem;
     padding: 0.4rem;
-  }
-
-  .stat-label,
-  .stat-value {
-    font-size: 0.8rem;
   }
 }
 
