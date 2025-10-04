@@ -133,6 +133,14 @@ export default {
           icon: "🔥",
           description: "Puntos de incendios detectados",
         },
+        {
+          id: "cordoba-fire-nasa",
+          name: "Incendios Córdoba (NASA)",
+          visible: false,
+          layerRef: null,
+          icon: "🚀",
+          description: "Datos reales de FIRMS",
+        },
       ],
       zoomLocked: false, // Por defecto zoom bloqueado en Córdoba
       dateRange: {
@@ -397,6 +405,9 @@ export default {
 
       // 5. Crear capa de incendios simulados (filtrados por fecha)
       this.createFireIncidentsLayer();
+
+      // 6. Crear capa de incendios reales de Córdoba (filtrados por fecha)
+      this.createRealFireIncidentsLayer();
     },
     addCoordinatesControl() {
       // Crear control personalizado para coordenadas
@@ -518,12 +529,77 @@ export default {
         simulatedLayer.layerRef = fireLayerGroup;
       }
     },
+    async createRealFireIncidentsLayer() {
+      try {
+        // Obtener datos reales de NASA FIRMS para Córdoba
+        const currentYear = new Date().getFullYear();
+        const response = await fetch(
+          `http://localhost:3000/api/v1/nasa/fire-incidents?year=${currentYear}&bbox=-66,-35,-62,-31`
+        );
+        const data = await response.json();
+
+        if (!data.success || !data.data.incidents) {
+          console.warn("No se pudieron obtener datos de incendios reales");
+          return;
+        }
+
+        // Filtrar por rango de fechas
+        const filteredIncidents = data.data.incidents.filter((incident) => {
+          const incidentDate = new Date(incident.acq_date);
+          const startDate = new Date(this.dateRange.start);
+          const endDate = new Date(this.dateRange.end);
+          return incidentDate >= startDate && incidentDate <= endDate;
+        });
+
+        const fireMarkers = [];
+
+        filteredIncidents.forEach((incident) => {
+          // Crear círculo rojo para cada incendio real (sin popup)
+          const fireCircle = L.circle([incident.latitude, incident.longitude], {
+            color: "red",
+            fillColor: "#ff0000",
+            fillOpacity: 0.8,
+            radius: 500, // Radio fijo de 500 metros
+            weight: 2,
+          });
+
+          fireMarkers.push(fireCircle);
+        });
+
+        // Remover capa anterior si existe
+        const nasaLayer = this.layers.find((l) => l.id === "cordoba-fire-nasa");
+        if (nasaLayer && nasaLayer.layerRef) {
+          this.map.removeLayer(nasaLayer.layerRef);
+        }
+
+        // Crear nueva capa
+        const fireLayerGroup = L.layerGroup(fireMarkers);
+
+        // Solo añadir al mapa si la capa está visible
+        if (nasaLayer && nasaLayer.visible) {
+          fireLayerGroup.addTo(this.map);
+        }
+
+        // Actualizar referencia
+        if (nasaLayer) {
+          nasaLayer.layerRef = fireLayerGroup;
+        }
+
+        console.log(
+          `Cargados ${filteredIncidents.length} incendios reales de NASA para Córdoba`
+        );
+      } catch (error) {
+        console.error("Error cargando incendios reales de NASA:", error);
+        // Si falla, la capa queda vacía (sin mostrar error al usuario)
+      }
+    },
   },
   watch: {
     dateRange: {
       handler() {
         // Actualizar capa de incendios cuando cambie el rango de fechas
         this.createFireIncidentsLayer();
+        this.createRealFireIncidentsLayer();
       },
       deep: true,
     },
