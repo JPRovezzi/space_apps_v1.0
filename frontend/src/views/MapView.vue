@@ -8,16 +8,95 @@
     </header>
     <div class="divider"></div>
 
-    <!-- Aquí irá el contenido del mapa en el futuro -->
-    <div class="map-content">
-      <p>Contenido del mapa próximamente...</p>
+    <div class="map-container">
+      <div ref="mapContainer" class="map"></div>
     </div>
   </div>
 </template>
 
 <script>
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import cordobaGeoJson from '../assets/data/cordoba-province.js'
+
+// Fix for default markers in Leaflet with webpack
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+})
+
 export default {
-  name: 'MapView'
+  name: 'MapView',
+  data() {
+    return {
+      zoom: 7,
+      center: [-30.2, -63.8], // Centro aproximado de la provincia de Córdoba
+      cordobaGeoJson: cordobaGeoJson,
+      map: null,
+      geoJsonLayer: null
+    }
+  },
+  mounted() {
+    this.initMap()
+  },
+  beforeUnmount() {
+    if (this.map) {
+      this.map.remove()
+    }
+  },
+  methods: {
+    initMap() {
+      // Crear el mapa
+      const mapContainer = this.$refs.mapContainer
+      if (mapContainer) {
+        this.map = L.map(mapContainer, {
+          center: this.center,
+          zoom: this.zoom
+        })
+
+      // Añadir capa de tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(this.map)
+
+      // Añadir capa GeoJSON
+      this.geoJsonLayer = L.geoJSON(this.cordobaGeoJson, {
+        style: {
+          color: '#ffffff',
+          weight: 3,
+          opacity: 0.9,
+          fillColor: 'rgba(255, 255, 255, 0.15)',
+          fillOpacity: 0.2
+        },
+        onEachFeature: this.onEachFeature
+      }).addTo(this.map)
+      }
+    },
+    onEachFeature(feature, layer) {
+      layer.on({
+        mouseover: (e) => {
+          const layer = e.target;
+          layer.setStyle({
+            weight: 4,
+            color: '#ffffff',
+            fillOpacity: 0.3
+          });
+        },
+        mouseout: (e) => {
+          const layer = e.target;
+          layer.setStyle({
+            color: '#ffffff',
+            weight: 3,
+            opacity: 0.9,
+            fillColor: 'rgba(255, 255, 255, 0.15)',
+            fillOpacity: 0.2
+          });
+        }
+      });
+    }
+  }
 }
 </script>
 
@@ -79,18 +158,22 @@ export default {
   margin: 0 2rem;
 }
 
-.map-content {
+.map-container {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1rem;
 }
 
-.map-content p {
-  font-size: 1.2rem;
-  opacity: 0.8;
-  text-align: center;
+.map {
+  height: 70vh;
+  width: 100%;
+  max-width: 1200px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
 @media (max-width: 768px) {
@@ -113,8 +196,13 @@ export default {
     margin: 0 1.5rem;
   }
 
-  .map-content {
-    padding: 1.5rem;
+  .map-container {
+    padding: 0.5rem;
+  }
+
+  .map {
+    height: 60vh;
+    border-radius: 8px;
   }
 }
 </style>

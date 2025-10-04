@@ -1,0 +1,22 @@
+export default {
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Provincia de Córdoba",
+        "country": "Argentina"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-66.5, -27.8],
+          [-61.2, -27.8],
+          [-61.2, -32.5],
+          [-66.5, -32.5],
+          [-66.5, -27.8]
+        ]]
+      }
+    }
+  ]
+}
