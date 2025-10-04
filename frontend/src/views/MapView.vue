@@ -9,6 +9,45 @@
     <div class="divider"></div>
 
     <div class="map-container">
+      <!-- Sidebar de control de capas -->
+      <aside :class="['map-sidebar', { collapsed: sidebarCollapsed }]">
+        <div class="sidebar-header">
+          <h3 class="sidebar-title">Capas del Mapa</h3>
+          <button @click="toggleSidebar" class="sidebar-toggle">
+            <span v-if="sidebarCollapsed">▶</span>
+            <span v-else>◀</span>
+          </button>
+        </div>
+
+        <div class="sidebar-content">
+          <div class="layers-list">
+            <div
+              v-for="layer in layers"
+              :key="layer.id"
+              class="layer-item"
+            >
+              <label class="layer-checkbox">
+                <input
+                  type="checkbox"
+                  :checked="layer.visible"
+                  @change="toggleLayer(layer.id)"
+                />
+                <span class="checkmark"></span>
+              </label>
+
+              <div class="layer-info">
+                <div class="layer-icon">{{ layer.icon }}</div>
+                <div class="layer-details">
+                  <div class="layer-name">{{ layer.name }}</div>
+                  <div class="layer-description">{{ layer.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Contenedor del mapa -->
       <div ref="mapContainer" class="map"></div>
     </div>
   </div>
@@ -35,7 +74,49 @@ export default {
       center: [-32.25, -63.7], // Centro aproximado de la provincia de Córdoba
       cordobaGeoJson: cordobaGeoJson,
       map: null,
-      geoJsonLayer: null
+      sidebarCollapsed: false,
+      layers: [
+        {
+          id: 'cordoba-province',
+          name: 'Provincia de Córdoba',
+          visible: true,
+          layerRef: null,
+          icon: '🏛️',
+          description: 'Límites provinciales'
+        },
+        {
+          id: 'cordoba-capital',
+          name: 'Córdoba Capital',
+          visible: true,
+          layerRef: null,
+          icon: '🏙️',
+          description: 'Ciudad capital'
+        },
+        {
+          id: 'influence-zone',
+          name: 'Zona de Influencia',
+          visible: true,
+          layerRef: null,
+          icon: '🎯',
+          description: 'Área de 30km de radio'
+        },
+        {
+          id: 'sub-region',
+          name: 'Sub-región Ejemplo',
+          visible: true,
+          layerRef: null,
+          icon: '🔷',
+          description: 'Polígono adicional'
+        },
+        {
+          id: 'route-line',
+          name: 'Ruta de Ejemplo',
+          visible: true,
+          layerRef: null,
+          icon: '🛣️',
+          description: 'Línea trazada'
+        }
+      ]
     }
   },
   mounted() {
@@ -68,8 +149,8 @@ export default {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map)
 
-      // Añadir capa GeoJSON
-      this.geoJsonLayer = L.geoJSON(this.cordobaGeoJson, {
+      // Añadir capa GeoJSON de Córdoba
+      const cordobaLayer = L.geoJSON(this.cordobaGeoJson, {
         style: {
           color: '#ffffff',
           weight: 3,
@@ -101,21 +182,52 @@ export default {
         }
       }).addTo(this.map)
 
+      // Almacenar referencia de la capa de Córdoba
+      const cordobaLayerData = this.layers.find(l => l.id === 'cordoba-province')
+      if (cordobaLayerData) {
+        cordobaLayerData.layerRef = cordobaLayer
+      }
+
       // Ajustar el mapa exactamente a los límites de Córdoba (sin padding)
-      this.map.fitBounds(this.geoJsonLayer.getBounds(), {
+      this.map.fitBounds(cordobaLayer.getBounds(), {
         padding: [0, 0] // Sin padding para ajuste perfecto al ancho del polígono
       })
 
-      // Ejemplos de elementos que se pueden agregar sobre el mapa:
+      // Crear elementos del mapa y almacenar referencias
+      this.createMapElements();
+      }
+    },
+    toggleSidebar() {
+      this.sidebarCollapsed = !this.sidebarCollapsed
+    },
+    toggleLayer(layerId) {
+      const layer = this.layers.find(l => l.id === layerId)
+      if (layer && layer.layerRef) {
+        layer.visible = !layer.visible
 
-      // 1. Marcador con popup
-      L.marker([-31.4167, -64.1833])
+        if (layer.visible) {
+          // Agregar la capa al mapa
+          layer.layerRef.addTo(this.map)
+        } else {
+          // Remover la capa del mapa
+          this.map.removeLayer(layer.layerRef)
+        }
+      }
+    },
+    createMapElements() {
+      // 1. Marcador de Córdoba Capital
+      const capitalMarker = L.marker([-31.4167, -64.1833])
         .addTo(this.map)
         .bindPopup('Córdoba Capital<br><b>Población: ~1.5M</b>')
         .openPopup();
 
-      // 2. Círculo (ejemplo de zona de influencia)
-      L.circle([-32.5, -63.5], {
+      const capitalLayer = this.layers.find(l => l.id === 'cordoba-capital')
+      if (capitalLayer) {
+        capitalLayer.layerRef = capitalMarker
+      }
+
+      // 2. Círculo de zona de influencia
+      const influenceCircle = L.circle([-32.5, -63.5], {
         color: 'red',
         fillColor: '#f03',
         fillOpacity: 0.3,
@@ -123,8 +235,13 @@ export default {
       }).addTo(this.map)
       .bindPopup('Zona de ejemplo');
 
-      // 3. Polígono adicional (ejemplo de sub-región)
-      L.polygon([
+      const influenceLayer = this.layers.find(l => l.id === 'influence-zone')
+      if (influenceLayer) {
+        influenceLayer.layerRef = influenceCircle
+      }
+
+      // 3. Polígono adicional (sub-región)
+      const subRegionPolygon = L.polygon([
         [-31.0, -63.0],
         [-31.5, -63.0],
         [-31.5, -63.5],
@@ -135,8 +252,13 @@ export default {
         fillOpacity: 0.2
       }).addTo(this.map);
 
-      // 4. Línea (ejemplo de ruta o límite)
-      L.polyline([
+      const subRegionLayer = this.layers.find(l => l.id === 'sub-region')
+      if (subRegionLayer) {
+        subRegionLayer.layerRef = subRegionPolygon
+      }
+
+      // 4. Línea (ruta de ejemplo)
+      const routeLine = L.polyline([
         [-30.0, -64.0],
         [-31.0, -64.5],
         [-32.0, -65.0]
@@ -145,6 +267,10 @@ export default {
         weight: 3,
         opacity: 0.7
       }).addTo(this.map);
+
+      const routeLayer = this.layers.find(l => l.id === 'route-line')
+      if (routeLayer) {
+        routeLayer.layerRef = routeLine
       }
     }
   }
@@ -254,6 +380,183 @@ export default {
   .map {
     height: 60vh;
     border-radius: 8px;
+  }
+}
+
+/* Sidebar Styles */
+.map-container {
+  display: flex;
+  position: relative;
+}
+
+.map-sidebar {
+  width: 320px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.map-sidebar.collapsed {
+  width: 50px;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background: rgba(0, 36, 107, 0.9);
+  color: white;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.layers-list {
+  max-height: calc(70vh - 80px);
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: background 0.2s ease;
+}
+
+.layer-item:hover {
+  background: rgba(0, 36, 107, 0.05);
+}
+
+.layer-checkbox {
+  position: relative;
+  margin-right: 1rem;
+  cursor: pointer;
+}
+
+.layer-checkbox input {
+  opacity: 0;
+  position: absolute;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #0369a1;
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.layer-checkbox input:checked + .checkmark {
+  background: #0369a1;
+  border-color: #0369a1;
+}
+
+.layer-checkbox input:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.layer-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.layer-icon {
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+  width: 30px;
+  text-align: center;
+}
+
+.layer-details {
+  flex: 1;
+}
+
+.layer-name {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.layer-description {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.map-sidebar.collapsed .sidebar-content,
+.map-sidebar.collapsed .sidebar-title {
+  display: none;
+}
+
+.map-sidebar.collapsed .layer-item {
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.map-sidebar.collapsed .layer-info {
+  display: none;
+}
+
+.map-sidebar.collapsed .layer-checkbox {
+  margin-right: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .map-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 1001;
+  }
+
+  .map-sidebar.collapsed {
+    width: 0;
+  }
+
+  .map-container {
+    position: relative;
   }
 }
 </style>
