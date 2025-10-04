@@ -25,6 +25,7 @@
               v-for="layer in layers"
               :key="layer.id"
               class="layer-item"
+              :data-fire-layer="layer.type === 'nasa-fire'"
             >
               <label class="layer-checkbox">
                 <input
@@ -44,6 +45,106 @@
               </div>
             </div>
           </div>
+
+          <!-- Controles de tiempo para capas NASA -->
+          <div v-if="hasActiveFireLayers" class="time-controls">
+            <h4 class="time-title">📅 Control Temporal</h4>
+
+            <div class="date-control">
+              <label class="control-label">Fecha específica:</label>
+              <input
+                type="date"
+                v-model="selectedDate"
+                @change="updateFireLayers"
+                :min="'2000-01-01'"
+                :max="today"
+                class="date-input"
+              />
+            </div>
+
+            <div class="year-control">
+              <label class="control-label">Año: {{ selectedYear }}</label>
+              <input
+                type="range"
+                min="2000"
+                :max="currentYear"
+                v-model="selectedYear"
+                @input="onYearChange"
+                class="year-slider"
+              />
+            </div>
+          </div>
+
+          <!-- Estadísticas de incendios -->
+          <div v-if="hasActiveFireLayers" class="fire-stats">
+            <div v-if="fireStats.error" class="offline-banner">
+              🔌 Backend desconectado - Sin datos científicos disponibles
+            </div>
+            <h4 class="stats-title">
+              📊 Estadísticas
+              <span v-if="fireStats.error" class="error-badge">❌ Sin conexión</span>
+              <span v-else-if="fireStats.dataSource === 'NASA FIRMS'" class="nasa-badge">🛰️ NASA Real</span>
+            </h4>
+            <div class="stat-item">
+              <span class="stat-label">Incendios {{ selectedYear }}:</span>
+              <span class="stat-value" :data-empty="fireStats.currentYearFires === null">
+                {{ fireStats.currentYearFires !== null ? fireStats.currentYearFires : '—' }}
+              </span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Área afectada:</span>
+              <span class="stat-value" :data-empty="fireStats.burnedArea === null">
+                {{ fireStats.burnedArea !== null ? fireStats.burnedArea + ' ha' : '—' }}
+              </span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Promedio histórico:</span>
+              <span class="stat-value" :data-empty="fireStats.avgFiresPerYear === null">
+                {{ fireStats.avgFiresPerYear !== null ? fireStats.avgFiresPerYear + '/año' : '—' }}
+              </span>
+            </div>
+
+            <!-- Información adicional sobre fuente de datos -->
+            <div v-if="!fireStats.error && fireStats.dataSource === 'NASA FIRMS'" class="data-info">
+              <div class="info-item">
+                <span class="info-label">📡 Fuente:</span>
+                <span class="info-value">{{ fireStats.dataSource }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">🔬 Confianza:</span>
+                <span class="info-value">{{ fireStats.confidence }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">⏰ Última actualización:</span>
+                <span class="info-value">{{ formatLastUpdate(fireStats.lastUpdated) }}</span>
+              </div>
+            </div>
+
+            <!-- Información adicional en modo offline -->
+            <div v-if="fireStats.error" class="data-info">
+              <div class="info-item">
+                <span class="info-label">📡 Fuente:</span>
+                <span class="info-value">{{ fireStats.dataSource }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">🔬 Estado:</span>
+                <span class="info-value">{{ fireStats.confidence }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">⏰ Datos:</span>
+                <span class="info-value">No disponibles</span>
+              </div>
+            </div>
+
+            <div v-if="fireStats.error" class="error-info">
+              <div class="error-message">
+                🔌 Backend desconectado
+                <br><small>Para ver datos reales de NASA, ejecute:</small>
+                <br><code class="command">cd backend && python run.py</code>
+                <br><small>{{ fireStats.error }}</small>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -57,6 +158,7 @@
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import cordobaGeoJson from '../assets/data/cordoba-province.js'
+import { nasaAPI } from '../services/api.js'
 
 // Fix for default markers in Leaflet with webpack
 delete L.Icon.Default.prototype._getIconUrl
@@ -115,12 +217,75 @@ export default {
           layerRef: null,
           icon: '🛣️',
           description: 'Línea trazada'
+        },
+        {
+          id: 'nasa-fires-modis-terra',
+          name: '🔥 Incendios MODIS Terra',
+          visible: false,
+          layerRef: null,
+          icon: '🔥',
+          description: 'Hotspots desde 2000',
+          type: 'nasa-fire',
+          source: 'MODIS_Terra_Thermal_Anomalies_All'
+        },
+        {
+          id: 'nasa-fires-modis-aqua',
+          name: '🔥 Incendios MODIS Aqua',
+          visible: false,
+          layerRef: null,
+          icon: '🔥',
+          description: 'Hotspots desde 2000',
+          type: 'nasa-fire',
+          source: 'MODIS_Aqua_Thermal_Anomalies_All'
+        },
+        {
+          id: 'nasa-fires-viirs',
+          name: '🚨 Incendios VIIRS (Alta Res)',
+          visible: false,
+          layerRef: null,
+          icon: '🚨',
+          description: 'Detección precisa desde 2012',
+          type: 'nasa-fire',
+          source: 'VIIRS_SNPP_Thermal_Anomalies_375m_All'
+        },
+        {
+          id: 'nasa-burned-areas',
+          name: '🌿 Áreas Quemadas',
+          visible: false,
+          layerRef: null,
+          icon: '🌿',
+          description: 'Áreas afectadas históricas',
+          type: 'nasa-fire',
+          source: 'MODIS_Terra_Data_No_Data'
         }
-      ]
+      ],
+      // Control de tiempo para capas NASA
+      selectedDate: new Date().toISOString().split('T')[0], // Fecha actual
+      selectedYear: new Date().getFullYear(),
+      currentYear: new Date().getFullYear(),
+      fireStats: {
+        currentYearFires: 0,
+        burnedArea: 0,
+        avgFiresPerYear: 0,
+        isSimulated: false,
+        error: null,
+        dataSource: "No disponible",
+        lastUpdated: null,
+        confidence: null
+      }
+    }
+  },
+  computed: {
+    hasActiveFireLayers() {
+      return this.layers.some(layer => layer.type === 'nasa-fire' && layer.visible)
+    },
+    today() {
+      return new Date().toISOString().split('T')[0]
     }
   },
   mounted() {
     this.initMap()
+    this.loadFireStats()
   },
   beforeUnmount() {
     if (this.map) {
@@ -213,16 +378,122 @@ export default {
     },
     toggleLayer(layerId) {
       const layer = this.layers.find(l => l.id === layerId)
-      if (layer && layer.layerRef) {
+      if (layer) {
         layer.visible = !layer.visible
 
-        if (layer.visible) {
-          // Agregar la capa al mapa
-          layer.layerRef.addTo(this.map)
-        } else {
-          // Remover la capa del mapa
+        if (layer.type === 'nasa-fire') {
+          // Manejo especial para capas de incendios de NASA
+          this.toggleNasaFireLayer(layer)
+        } else if (layer.layerRef) {
+          // Manejo normal para otras capas
+          if (layer.visible) {
+            layer.layerRef.addTo(this.map)
+          } else {
+            this.map.removeLayer(layer.layerRef)
+          }
+        }
+      }
+    },
+    toggleNasaFireLayer(layer) {
+      if (layer.visible) {
+        // Crear y agregar capa de NASA con fecha seleccionada
+        this.createNasaFireLayer(layer)
+      } else {
+        // Remover capa de NASA
+        if (layer.layerRef) {
+          this.map.removeLayer(layer.layerRef)
+          layer.layerRef = null
+        }
+      }
+    },
+    createNasaFireLayer(layer) {
+      // Construir URL con fecha seleccionada
+      const timeParam = this.selectedDate.replace(/-/g, '')
+      const baseUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/'
+
+      let url
+      if (layer.source.includes('VIIRS')) {
+        // VIIRS usa formato diferente
+        url = `${baseUrl}${layer.source}/default/${timeParam}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`
+      } else {
+        // MODIS usa formato WMTS estándar
+        url = `${baseUrl}${layer.source}/default/${timeParam}/EPSG3857_500m/{z}/{y}/{x}.png`
+      }
+
+      const nasaLayer = L.tileLayer(url, {
+        attribution: 'NASA Worldview | Earthdata',
+        opacity: 0.8,
+        maxZoom: 12,
+        minZoom: 1
+      })
+
+      nasaLayer.addTo(this.map)
+      layer.layerRef = nasaLayer
+    },
+    updateFireLayers() {
+      // Actualizar todas las capas de incendios visibles con nueva fecha
+      const fireLayers = this.layers.filter(l => l.type === 'nasa-fire' && l.visible)
+      fireLayers.forEach(layer => {
+        if (layer.layerRef) {
           this.map.removeLayer(layer.layerRef)
         }
+        this.createNasaFireLayer(layer)
+      })
+    },
+    onYearChange() {
+      // Actualizar fecha cuando cambia el año en el slider
+      const year = parseInt(this.selectedYear)
+      const currentDate = new Date(this.selectedDate)
+      const newDate = new Date(year, currentDate.getMonth(), currentDate.getDate())
+
+      // Ajustar si la fecha no existe en ese año (ej: 29 feb en año no bisiesto)
+      if (newDate.getFullYear() !== year) {
+        newDate.setDate(28)
+      }
+
+      this.selectedDate = newDate.toISOString().split('T')[0]
+      this.updateFireLayers()
+      this.loadFireStats() // Recargar estadísticas para el nuevo año
+    },
+    async loadFireStats() {
+      try {
+        const response = await nasaAPI.getFireStats(this.selectedYear)
+        this.fireStats = {
+          currentYearFires: response.total_fires,
+          burnedArea: response.total_burned_area_ha,
+          avgFiresPerYear: response.avg_fires_per_month * 12,
+          isSimulated: false,
+          dataSource: response.data_source || "NASA FIRMS",
+          lastUpdated: response.last_updated,
+          confidence: response.confidence
+        }
+      } catch (error) {
+        // Sin conexión al backend - no mostrar datos falsos
+        this.fireStats = {
+          currentYearFires: null,
+          burnedArea: null,
+          avgFiresPerYear: null,
+          isSimulated: false,
+          error: "Backend no disponible",
+          dataSource: "No disponible",
+          lastUpdated: null,
+          confidence: "Requiere conexión a backend para datos científicos"
+        }
+      }
+    },
+    formatLastUpdate(timestamp) {
+      if (!timestamp) return "Nunca"
+      try {
+        const date = new Date(timestamp)
+        return date.toLocaleString('es-AR', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch {
+        return "Desconocido"
       }
     },
     createMapElements() {
@@ -674,6 +945,290 @@ export default {
   .leaflet-bottom.leaflet-right {
     bottom: 15px !important;
     right: 15px !important;
+  }
+}
+
+/* NASA Fire Controls Styles */
+.time-controls {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.time-title {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.date-control {
+  margin-bottom: 1rem;
+}
+
+.control-label {
+  display: block;
+  color: #ffffff;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.date-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000000;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #0369a1;
+  box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.2);
+}
+
+.year-control {
+  margin-bottom: 1rem;
+}
+
+.year-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0369a1;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.year-slider::-webkit-slider-thumb:hover {
+  background: #0284c7;
+  transform: scale(1.1);
+}
+
+.year-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0369a1;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fire-stats {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stats-title {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.error-badge {
+  font-size: 0.75rem;
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: bold;
+  border: 1px solid rgba(239, 68, 68, 1);
+}
+
+.nasa-badge {
+  font-size: 0.75rem;
+  background: rgba(34, 197, 94, 0.8);
+  color: #ffffff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: normal;
+  border: 1px solid rgba(34, 197, 94, 1);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  color: #ffffff;
+  font-size: 0.85rem;
+  opacity: 1;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  min-width: 60px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stat-value[data-empty="true"] {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  font-style: italic;
+  font-weight: normal;
+}
+
+/* Información de fuente de datos */
+.data-info {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  font-size: 0.8rem;
+}
+
+.info-label {
+  color: #ffffff;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #ffffff;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+
+/* Información de error */
+.error-info {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 6px;
+}
+
+.error-message {
+  color: #ffffff;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.command {
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.offline-banner {
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Fire layer highlighting */
+.layer-item[data-fire-layer="true"] {
+  position: relative;
+}
+
+.layer-item[data-fire-layer="true"]::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+/* Responsive adjustments for fire controls */
+@media (max-width: 768px) {
+  .time-controls,
+  .fire-stats {
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .time-title,
+  .stats-title {
+    font-size: 0.9rem;
+  }
+
+  .control-label {
+    font-size: 0.8rem;
+  }
+
+  .date-input {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+
+  .stat-label,
+  .stat-value {
+    font-size: 0.8rem;
   }
 }
 </style>

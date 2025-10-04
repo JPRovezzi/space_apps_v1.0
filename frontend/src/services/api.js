@@ -2,14 +2,15 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8000',
-  timeout: 10000,
+  timeout: 2000, // Timeout corto para fallar rápido cuando no hay backend
 })
 
 // Interceptores para manejo de errores
 api.interceptors.response.use(
   response => response,
   error => {
-    console.error('API Error:', error.response?.data || error.message)
+    // Silenciar completamente todos los errores para mejor UX offline
+    // El frontend maneja los errores de manera elegante
     return Promise.reject(error)
   }
 )
@@ -43,6 +44,44 @@ export const mlAPI = {
     return api.post('/api/v1/upload-data', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
+      }
+    })
+  }
+}
+
+// API methods para datos de NASA
+export const nasaAPI = {
+  // Obtener historial de incendios para una región
+  async getFireHistory(bbox, startYear, endYear) {
+    return api.get('/api/v1/nasa/fire-history', {
+      params: {
+        bbox: bbox || '-66,-35,-62,-31', // Córdoba por defecto
+        start_year: startYear || 2000,
+        end_year: endYear || new Date().getFullYear()
+      }
+    })
+  },
+
+  // Obtener estadísticas de incendios para un año específico
+  async getFireStats(year, bbox) {
+    return api.get('/api/v1/nasa/fire-stats', {
+      params: {
+        year: year || new Date().getFullYear(),
+        bbox: bbox || '-66,-35,-62,-31'
+      }
+    })
+  },
+
+  // Buscar datasets disponibles de NASA para incendios
+  async getAvailableFireLayers() {
+    return api.get('/api/v1/nasa/fire-layers')
+  },
+
+  // Obtener datos de incendios en tiempo real (últimos 7 días)
+  async getActiveFires(bbox) {
+    return api.get('/api/v1/nasa/active-fires', {
+      params: {
+        bbox: bbox || '-66,-35,-62,-31'
       }
     })
   }
