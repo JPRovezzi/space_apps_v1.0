@@ -253,14 +253,6 @@ export default {
         });
         this.map.on("zoomend", () => {
           this.isZooming = false;
-          // Actualizar capa de incendios simulados después del zoom si está visible
-          const simulatedLayer = this.layers.find(
-            (l) => l.id === "simulated-fire"
-          );
-
-          if (simulatedLayer?.visible) {
-            this.updateSimulatedFireLayer();
-          }
         });
 
         // Crear elementos del mapa y almacenar referencias
@@ -275,19 +267,14 @@ export default {
     },
     toggleLayer(layerId) {
       const layer = this.layers.find((l) => l.id === layerId);
-      if (layer) {
+      if (layer && layer.layerRef) {
         layer.visible = !layer.visible;
 
-        // Para capas de incendios simulados
-        if (layer.type === "simulated-fire") {
-          this.updateSimulatedFireLayer();
-        } else if (layer.layerRef) {
-          // Manejo normal para otras capas
-          if (layer.visible) {
-            layer.layerRef.addTo(this.map);
-          } else {
-            this.map.removeLayer(layer.layerRef);
-          }
+        // Manejo uniforme para todas las capas (incluyendo incendios simulados)
+        if (layer.visible) {
+          layer.layerRef.addTo(this.map);
+        } else {
+          this.map.removeLayer(layer.layerRef);
         }
       }
     },
@@ -361,9 +348,9 @@ export default {
         this.dateRange.start,
         this.dateRange.end
       );
-      this.updateSimulatedFireLayer();
+      this.loadFilteredFireIncidents();
     },
-    updateSimulatedFireLayer() {
+    loadFilteredFireIncidents() {
       const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
       if (!simulatedLayer) return;
 
@@ -495,6 +482,12 @@ export default {
       const routeLayer = this.layers.find((l) => l.id === "route-line");
       if (routeLayer) {
         routeLayer.layerRef = routeLine;
+      }
+
+      // 5. Inicializar referencia para incendios simulados (se poblará después)
+      const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
+      if (simulatedLayer) {
+        simulatedLayer.layerRef = null; // Se asignará cuando se carguen los datos
       }
     },
     addCoordinatesControl() {
