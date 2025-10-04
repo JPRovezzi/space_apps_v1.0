@@ -3,6 +3,14 @@
     <MainHeader title="Mapa de Córdoba" />
     <div class="divider"></div>
 
+    <MapControls
+      :zoom-locked="zoomLocked"
+      :fire-incidents-count="visibleFireIncidentsCount"
+      :selected-year="selectedYear"
+      @toggle-zoom-lock="toggleZoomLock"
+      @fit-bounds="fitToCordobaBounds"
+    />
+
     <div class="map-container">
       <!-- Sidebar de control de capas -->
       <aside :class="['map-sidebar', { collapsed: sidebarCollapsed }]">
@@ -118,6 +126,16 @@
               </div>
             </div>
 
+            <!-- Información de incendios visualizados -->
+            <div v-if="hasActiveFireLayers" class="visualization-info">
+              <div class="info-item">
+                <span class="info-label">🔥 Visualizados:</span>
+                <span class="info-value"
+                  >{{ visibleFireIncidentsCount }} puntos</span
+                >
+              </div>
+            </div>
+
             <!-- Información adicional en modo offline -->
             <div v-if="fireStats.error" class="data-info">
               <div class="info-item">
@@ -158,6 +176,7 @@ import "leaflet/dist/leaflet.css";
 import cordobaGeoJson from "../assets/data/cordoba-province.js";
 import { nasaAPI } from "../services/api.js";
 import MainHeader from "../components/MainHeader.vue";
+import MapControls from "../components/MapControls.vue";
 
 // Fix for default markers in Leaflet with webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -171,6 +190,7 @@ export default {
   name: "MapView",
   components: {
     MainHeader,
+    MapControls,
   },
   data() {
     return {
@@ -178,6 +198,7 @@ export default {
       center: [-32.25, -63.7], // Centro aproximado de la provincia de Córdoba
       cordobaGeoJson: cordobaGeoJson,
       map: null,
+      cordobaLayer: null, // Referencia a la capa de Córdoba
       sidebarCollapsed: false,
       layers: [
         {
@@ -220,8 +241,18 @@ export default {
           icon: "🛣️",
           description: "Línea trazada",
         },
+        {
+          id: "nasa-fire",
+          name: "Incendios NASA",
+          visible: true,
+          layerRef: null,
+          type: "nasa-fire",
+          icon: "🔥",
+          description: "Puntos de incendio detectados",
+        },
       ],
       selectedYear: new Date().getFullYear(),
+      zoomLocked: true, // Por defecto zoom bloqueado en Córdoba
       fireStats: {
         currentYearFires: 0,
         burnedArea: 0,
@@ -232,17 +263,23 @@ export default {
         lastUpdated: null,
         confidence: null,
       },
+      fireIncidents: [],
     };
   },
   computed: {
     hasActiveFireLayers() {
-      // Ya no hay capas de incendios
-      return false;
+      return this.layers.some(
+        (layer) => layer.type === "nasa-fire" && layer.visible
+      );
+    },
+    visibleFireIncidentsCount() {
+      return this.fireIncidents.length;
     },
   },
   mounted() {
     this.initMap();
     this.loadFireStats();
+    this.loadFireIncidents();
   },
   beforeUnmount() {
     if (this.map) {
@@ -257,13 +294,7 @@ export default {
         this.map = L.map(mapContainer, {
           center: this.center,
           zoom: this.zoom,
-          minZoom: 8, // Zoom mínimo para evitar alejarse demasiado
-          maxZoom: 12, // Zoom máximo para evitar acercarse demasiado
-          maxBounds: [
-            [-29.0, -61.0], // Esquina noroeste (mínimo margen)
-            [-35.5, -66.0], // Esquina sureste (mínimo margen)
-          ],
-          maxBoundsViscosity: 1.0, // Hace que los límites sean estrictos
+          // Las restricciones se aplicarán dinámicamente en updateMapBounds()
         });
 
         // Agregar control de escala
@@ -319,6 +350,7 @@ export default {
         }).addTo(this.map);
 
         // Almacenar referencia de la capa de Córdoba
+        this.cordobaLayer = cordobaLayer; // Referencia global para fitToCordobaBounds
         const cordobaLayerData = this.layers.find(
           (l) => l.id === "cordoba-province"
         );
@@ -333,6 +365,9 @@ export default {
 
         // Crear elementos del mapa y almacenar referencias
         this.createMapElements();
+
+        // Aplicar restricciones de zoom iniciales
+        this.updateMapBounds();
       }
     },
     toggleSidebar() {
@@ -355,6 +390,44 @@ export default {
     },
     onYearChange() {
       this.loadFireStats(); // Recargar estadísticas para el nuevo año
+      this.loadFireIncidents(); // Recargar puntos de incendio para el nuevo año
+    },
+    toggleZoomLock() {
+      this.zoomLocked = !this.zoomLocked;
+      this.updateMapBounds();
+      if (this.zoomLocked) {
+        // Si se bloquea el zoom, centrar automáticamente en Córdoba
+        this.fitToCordobaBounds();
+      }
+    },
+    fitToCordobaBounds() {
+      if (this.map && this.cordobaGeoJson) {
+        this.map.fitBounds(this.cordobaLayer.getBounds(), {
+          padding: [20, 20],
+          maxZoom: this.zoomLocked ? 12 : 18,
+        });
+      }
+    },
+    updateMapBounds() {
+      if (!this.map) return;
+
+      if (this.zoomLocked) {
+        // Aplicar restricciones de Córdoba
+        const cordobaBounds = [
+          [-29.5, -66.0], // Noroeste
+          [-35.0, -62.0], // Sureste
+        ];
+        this.map.setMaxBounds(cordobaBounds);
+        this.map.setMaxZoom(12);
+        this.map.setMinZoom(8);
+        this.map.options.maxBoundsViscosity = 1.0;
+      } else {
+        // Quitar restricciones - zoom libre
+        this.map.setMaxBounds(null);
+        this.map.setMaxZoom(18);
+        this.map.setMinZoom(1);
+        this.map.options.maxBoundsViscosity = 0.0;
+      }
     },
     async loadFireStats() {
       try {
@@ -380,6 +453,66 @@ export default {
           lastUpdated: null,
           confidence: null,
         };
+      }
+    },
+    async loadFireIncidents() {
+      try {
+        const response = await nasaAPI.getFireIncidents(this.selectedYear);
+        this.fireIncidents = response.incidents || [];
+        this.updateFireLayer();
+      } catch (error) {
+        console.warn("Error loading fire incidents:", error);
+        this.fireIncidents = [];
+        this.updateFireLayer();
+      }
+    },
+    updateFireLayer() {
+      const fireLayer = this.layers.find((l) => l.id === "nasa-fire");
+      if (!fireLayer) return;
+
+      // Limpiar layer existente
+      if (fireLayer.layerRef) {
+        this.map.removeLayer(fireLayer.layerRef);
+      }
+
+      // Crear nuevo layer group para incendios
+      const fireLayerGroup = L.layerGroup();
+
+      // Agregar marcadores para cada incendio
+      this.fireIncidents.forEach((incident) => {
+        const marker = L.marker([incident.latitude, incident.longitude], {
+          icon: L.divIcon({
+            className: "fire-marker",
+            html: "🔥",
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+          }),
+        });
+
+        // Popup con información del incendio
+        const popupContent = `
+          <div class="fire-popup">
+            <h4>🔥 Incendio Detectado</h4>
+            <p><strong>Fecha:</strong> ${incident.acq_date}</p>
+            <p><strong>Hora:</strong> ${incident.acq_time}</p>
+            <p><strong>Confianza:</strong> ${incident.confidence}%</p>
+            <p><strong>Brillo:</strong> ${incident.brightness}K</p>
+            <p><strong>Satélite:</strong> ${incident.satellite}</p>
+            <p><strong>Día/Noche:</strong> ${
+              incident.daynight === "D" ? "Día" : "Noche"
+            }</p>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        fireLayerGroup.addLayer(marker);
+      });
+
+      fireLayer.layerRef = fireLayerGroup;
+
+      // Agregar al mapa si la capa está visible
+      if (fireLayer.visible && this.map) {
+        fireLayerGroup.addTo(this.map);
       }
     },
     formatLastUpdate(timestamp) {
@@ -970,7 +1103,8 @@ export default {
 }
 
 /* Información de fuente de datos */
-.data-info {
+.data-info,
+.visualization-info {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -1082,5 +1216,42 @@ export default {
   .stat-value {
     font-size: 0.8rem;
   }
+}
+
+/* Fire Markers Styles */
+.fire-marker {
+  font-size: 24px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  filter: drop-shadow(0 0 8px rgba(255, 100, 0, 0.8));
+  animation: fire-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fire-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.fire-popup {
+  font-family: Arial, sans-serif;
+  max-width: 250px;
+}
+
+.fire-popup h4 {
+  margin: 0 0 8px 0;
+  color: #e74c3c;
+  font-size: 14px;
+}
+
+.fire-popup p {
+  margin: 4px 0;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>
