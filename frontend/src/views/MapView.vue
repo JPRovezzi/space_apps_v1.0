@@ -144,6 +144,17 @@ export default {
           maxBoundsViscosity: 1.0 // Hace que los límites sean estrictos
         })
 
+        // Agregar control de escala
+        L.control.scale({
+          position: 'bottomright',
+          metric: true,
+          imperial: false,
+          maxWidth: 200
+        }).addTo(this.map)
+
+        // Agregar control de coordenadas del mouse
+        this.addCoordinatesControl()
+
         // Añadir capa de tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -272,12 +283,46 @@ export default {
       if (routeLayer) {
         routeLayer.layerRef = routeLine
       }
+    },
+    addCoordinatesControl() {
+      // Crear control personalizado para coordenadas
+      const CoordinatesControl = L.Control.extend({
+        options: {
+          position: 'bottomright'
+        },
+
+        onAdd: function(map) {
+          // Crear contenedor del control
+          const container = L.DomUtil.create('div', 'coordinates-control')
+          container.innerHTML = '<div class="coordinates-display">Mueva el mouse sobre el mapa</div>'
+
+          // Evitar que los eventos del mouse en el control se propaguen al mapa
+          L.DomEvent.disableClickPropagation(container)
+          L.DomEvent.disableScrollPropagation(container)
+
+          // Escuchar eventos del mouse en el mapa
+          map.on('mousemove', function(e) {
+            const lat = e.latlng.lat.toFixed(5)
+            const lng = e.latlng.lng.toFixed(5)
+            container.innerHTML = `<div class="coordinates-display">Lat: ${lat} | Lon: ${lng}</div>`
+          })
+
+          map.on('mouseout', function() {
+            container.innerHTML = '<div class="coordinates-display">Mueva el mouse sobre el mapa</div>'
+          })
+
+          return container
+        }
+      })
+
+      // Agregar el control al mapa
+      new CoordinatesControl().addTo(this.map)
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .map-view {
   min-height: 100vh;
   background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
@@ -557,6 +602,78 @@ export default {
 
   .map-container {
     position: relative;
+  }
+}
+
+/* Map Controls Styles - Global para que aplique a controles de Leaflet */
+.coordinates-control {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+  margin-bottom: 10px !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  min-width: 200px !important;
+  text-align: center !important;
+}
+
+.coordinates-display {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #000000 !important;
+}
+
+/* Override default Leaflet scale control styles */
+.leaflet-control-scale {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 6px 10px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #1f2937 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-control-scale-line {
+  border-color: #0369a1 !important;
+  background: rgba(3, 105, 161, 0.1) !important;
+}
+
+/* Positioning adjustments for controls */
+.leaflet-bottom.leaflet-right {
+  bottom: 20px !important;
+  right: 20px !important;
+}
+
+.leaflet-control-scale {
+  margin-bottom: 8px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .coordinates-control {
+    min-width: 180px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .leaflet-control-scale {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+
+  .leaflet-bottom.leaflet-right {
+    bottom: 15px !important;
+    right: 15px !important;
   }
 }
 </style>
