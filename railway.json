@@ -1,10 +1,8 @@
 {
   "build": {
     "builder": "dockerfile",
-    "dockerfilePath": "./Dockerfile",
-    "context": "./backend"
+    "dockerfilePath": "./backend/Dockerfile"
   },
-  
   "deploy": {
     "healthcheckPath": "/health"
   }
