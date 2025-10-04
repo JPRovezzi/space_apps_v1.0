@@ -5,6 +5,7 @@
 
     <MapControls
       :zoom-locked="zoomLocked"
+      :nasa-api-connected="nasaApiConnected"
       :date-range="dateRange"
       @toggle-zoom-lock="toggleZoomLock"
       @fit-bounds="fitToCordobaBounds"
@@ -138,14 +139,29 @@ export default {
         start: "2024-01-15",
         end: "2024-10-08",
       },
+      nasaApiConnected: false,
+      nasaConnectionCheckInterval: null,
     };
   },
-  mounted() {
+  async mounted() {
     this.initMap();
+
+    // Verificar conexión con NASA API inicialmente
+    await this.checkNasaApiConnection();
+
+    // Configurar verificación periódica cada 30 segundos
+    this.nasaConnectionCheckInterval = setInterval(() => {
+      this.checkNasaApiConnection();
+    }, 30000);
   },
   beforeUnmount() {
     if (this.map) {
       this.map.remove();
+    }
+
+    // Limpiar intervalo de verificación de conexión NASA
+    if (this.nasaConnectionCheckInterval) {
+      clearInterval(this.nasaConnectionCheckInterval);
     }
   },
   methods: {
@@ -417,6 +433,29 @@ export default {
 
       // Agregar el control al mapa
       new CoordinatesControl().addTo(this.map);
+    },
+    async checkNasaApiConnection() {
+      try {
+        // Crear AbortController para timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+
+        // Hacer una petición simple para verificar conexión
+        const response = await fetch("/api/v1/nasa/health", {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        this.nasaApiConnected = response.ok;
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.warn("NASA API connection check timed out");
+        } else {
+          console.warn("Error checking NASA API connection:", error);
+        }
+        this.nasaApiConnected = false;
+      }
     },
     createFireIncidentsLayer() {
       // Filtrar incendios por rango de fechas

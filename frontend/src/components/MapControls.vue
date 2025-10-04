@@ -18,18 +18,19 @@
         }}</span>
       </button>
 
-      <!-- Separador -->
-      <div class="control-separator"></div>
-
-      <!-- Info de Incendios -->
-      <div class="control-info">
-        <span class="info-icon">🔥</span>
-        <span class="info-text">
-          {{ fireIncidentsCount }} incendios ({{
-            formatDateRange(dateRange.start)
-          }}
-          - {{ formatDateRange(dateRange.end) }})
-        </span>
+      <!-- Indicador de conexión NASA -->
+      <div
+        class="nasa-status-indicator"
+        :class="{
+          connected: nasaApiConnected,
+          disconnected: !nasaApiConnected,
+        }"
+        :title="
+          nasaApiConnected ? 'API NASA: Conectado' : 'API NASA: Desconectado'
+        "
+      >
+        <span class="status-icon">{{ nasaApiConnected ? "🟢" : "🔴" }}</span>
+        <span class="status-text">NASA</span>
       </div>
     </div>
 
@@ -86,9 +87,9 @@ export default {
       type: Boolean,
       required: true,
     },
-    fireIncidentsCount: {
-      type: Number,
-      default: 0,
+    nasaApiConnected: {
+      type: Boolean,
+      default: false,
     },
     dateRange: {
       type: Object,
@@ -103,19 +104,6 @@ export default {
     },
   },
   emits: ["toggle-zoom-lock", "fit-bounds", "update-date-range"],
-  methods: {
-    formatDateRange(dateString) {
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("es-ES", {
-          month: "short",
-          year: "numeric",
-        });
-      } catch {
-        return dateString;
-      }
-    },
-  },
 };
 </script>
 
@@ -174,17 +162,42 @@ export default {
   background: #e1e8ed;
 }
 
-.control-info {
+.nasa-status-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #2c3e50;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 0.8rem;
   font-weight: 500;
-  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  cursor: default;
+  border: 2px solid transparent;
 }
 
-.info-icon {
-  font-size: 1.1rem;
+.nasa-status-indicator.connected {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+}
+
+.nasa-status-indicator.disconnected {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+
+.status-icon {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .control-icon {
@@ -216,12 +229,17 @@ export default {
     display: none; /* Ocultar texto en móvil, solo iconos */
   }
 
-  .control-separator {
-    height: 20px;
+  .nasa-status-indicator {
+    padding: 4px 8px;
+    font-size: 0.75rem;
   }
 
-  .control-info {
-    font-size: 0.8rem;
+  .status-text {
+    display: none; /* Ocultar texto en móvil, solo icono */
+  }
+
+  .control-separator {
+    height: 20px;
   }
 
   /* En móvil, cambiar a diseño stacked si es necesario */
@@ -311,10 +329,6 @@ export default {
   .map-controls-bar {
     padding: 8px 12px;
     margin: 0 0.25rem;
-  }
-
-  .control-info {
-    display: none; /* Ocultar info de incendios en pantallas muy pequeñas */
   }
 
   .date-range-controls {
