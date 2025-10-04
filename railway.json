@@ -1,6 +1,7 @@
 {
   "build": {
-    "context": "backend"
+    "builder": "dockerfile",
+    "dockerfilePath": "backend/Dockerfile"
   },
   "deploy": {
     "healthcheckPath": "/health"
