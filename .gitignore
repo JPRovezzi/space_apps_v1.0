@@ -2,6 +2,7 @@
 frontend/node_modules
 backend/venv
 *.pyc
+*.cpython-312.pyc
 *.pyo
 *.pyd
 __pycache__/
