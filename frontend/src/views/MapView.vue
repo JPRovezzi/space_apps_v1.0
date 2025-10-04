@@ -46,34 +46,6 @@
             </div>
           </div>
 
-          <!-- Controles de tiempo para capas NASA -->
-          <div v-if="hasActiveFireLayers" class="time-controls">
-            <h4 class="time-title">📅 Control Temporal</h4>
-
-            <div class="date-control">
-              <label class="control-label">Fecha específica:</label>
-              <input
-                type="date"
-                v-model="selectedDate"
-                @change="updateFireLayers"
-                :min="'2000-01-01'"
-                :max="today"
-                class="date-input"
-              />
-            </div>
-
-            <div class="year-control">
-              <label class="control-label">Año: {{ selectedYear }}</label>
-              <input
-                type="range"
-                min="2000"
-                :max="currentYear"
-                v-model="selectedYear"
-                @input="onYearChange"
-                class="year-slider"
-              />
-            </div>
-          </div>
 
           <!-- Estadísticas de incendios -->
           <div v-if="hasActiveFireLayers" class="fire-stats">
@@ -218,51 +190,8 @@ export default {
           icon: '🛣️',
           description: 'Línea trazada'
         },
-        {
-          id: 'nasa-fires-modis-terra',
-          name: '🔥 Incendios MODIS Terra',
-          visible: false,
-          layerRef: null,
-          icon: '🔥',
-          description: 'Hotspots desde 2000',
-          type: 'nasa-fire',
-          source: 'MODIS_Terra_Thermal_Anomalies_All'
-        },
-        {
-          id: 'nasa-fires-modis-aqua',
-          name: '🔥 Incendios MODIS Aqua',
-          visible: false,
-          layerRef: null,
-          icon: '🔥',
-          description: 'Hotspots desde 2000',
-          type: 'nasa-fire',
-          source: 'MODIS_Aqua_Thermal_Anomalies_All'
-        },
-        {
-          id: 'nasa-fires-viirs',
-          name: '🚨 Incendios VIIRS (Alta Res)',
-          visible: false,
-          layerRef: null,
-          icon: '🚨',
-          description: 'Detección precisa desde 2012',
-          type: 'nasa-fire',
-          source: 'VIIRS_SNPP_Thermal_Anomalies_375m_All'
-        },
-        {
-          id: 'nasa-burned-areas',
-          name: '🌿 Áreas Quemadas',
-          visible: false,
-          layerRef: null,
-          icon: '🌿',
-          description: 'Áreas afectadas históricas',
-          type: 'nasa-fire',
-          source: 'MODIS_Terra_Data_No_Data'
-        }
       ],
-      // Control de tiempo para capas NASA
-      selectedDate: new Date().toISOString().split('T')[0], // Fecha actual
       selectedYear: new Date().getFullYear(),
-      currentYear: new Date().getFullYear(),
       fireStats: {
         currentYearFires: 0,
         burnedArea: 0,
@@ -277,10 +206,8 @@ export default {
   },
   computed: {
     hasActiveFireLayers() {
-      return this.layers.some(layer => layer.type === 'nasa-fire' && layer.visible)
-    },
-    today() {
-      return new Date().toISOString().split('T')[0]
+      // Ya no hay capas de incendios
+      return false
     }
   },
   mounted() {
@@ -381,10 +308,7 @@ export default {
       if (layer) {
         layer.visible = !layer.visible
 
-        if (layer.type === 'nasa-fire') {
-          // Manejo especial para capas de incendios de NASA
-          this.toggleNasaFireLayer(layer)
-        } else if (layer.layerRef) {
+        if (layer.layerRef) {
           // Manejo normal para otras capas
           if (layer.visible) {
             layer.layerRef.addTo(this.map)
@@ -394,81 +318,23 @@ export default {
         }
       }
     },
-    toggleNasaFireLayer(layer) {
-      if (layer.visible) {
-        // Crear y agregar capa de NASA con fecha seleccionada
-        this.createNasaFireLayer(layer)
-      } else {
-        // Remover capa de NASA
-        if (layer.layerRef) {
-          this.map.removeLayer(layer.layerRef)
-          layer.layerRef = null
-        }
-      }
-    },
-    createNasaFireLayer(layer) {
-      // Construir URL con fecha seleccionada
-      const timeParam = this.selectedDate.replace(/-/g, '')
-      const baseUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/'
-
-      let url
-      if (layer.source.includes('VIIRS')) {
-        // VIIRS usa formato diferente
-        url = `${baseUrl}${layer.source}/default/${timeParam}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`
-      } else {
-        // MODIS usa formato WMTS estándar
-        url = `${baseUrl}${layer.source}/default/${timeParam}/EPSG3857_500m/{z}/{y}/{x}.png`
-      }
-
-      const nasaLayer = L.tileLayer(url, {
-        attribution: 'NASA Worldview | Earthdata',
-        opacity: 0.8,
-        maxZoom: 12,
-        minZoom: 1
-      })
-
-      nasaLayer.addTo(this.map)
-      layer.layerRef = nasaLayer
-    },
-    updateFireLayers() {
-      // Actualizar todas las capas de incendios visibles con nueva fecha
-      const fireLayers = this.layers.filter(l => l.type === 'nasa-fire' && l.visible)
-      fireLayers.forEach(layer => {
-        if (layer.layerRef) {
-          this.map.removeLayer(layer.layerRef)
-        }
-        this.createNasaFireLayer(layer)
-      })
-    },
     onYearChange() {
-      // Actualizar fecha cuando cambia el año en el slider
-      const year = parseInt(this.selectedYear)
-      const currentDate = new Date(this.selectedDate)
-      const newDate = new Date(year, currentDate.getMonth(), currentDate.getDate())
-
-      // Ajustar si la fecha no existe en ese año (ej: 29 feb en año no bisiesto)
-      if (newDate.getFullYear() !== year) {
-        newDate.setDate(28)
-      }
-
-      this.selectedDate = newDate.toISOString().split('T')[0]
-      this.updateFireLayers()
       this.loadFireStats() // Recargar estadísticas para el nuevo año
     },
     async loadFireStats() {
       try {
         const response = await nasaAPI.getFireStats(this.selectedYear)
         this.fireStats = {
-          currentYearFires: response.total_fires,
-          burnedArea: response.total_burned_area_ha,
-          avgFiresPerYear: response.avg_fires_per_month * 12,
+          currentYearFires: response.total_fires || 0,
+          burnedArea: response.total_burned_area_ha || 0,
+          avgFiresPerYear: (response.avg_fires_per_month || 0) * 12,
           isSimulated: false,
           dataSource: response.data_source || "NASA FIRMS",
-          lastUpdated: response.last_updated,
-          confidence: response.confidence
+          lastUpdated: response.last_updated || null,
+          confidence: response.confidence || null,
+          error: null
         }
       } catch (error) {
-        // Sin conexión al backend - no mostrar datos falsos
         this.fireStats = {
           currentYearFires: null,
           burnedArea: null,
@@ -477,7 +343,7 @@ export default {
           error: "Backend no disponible",
           dataSource: "No disponible",
           lastUpdated: null,
-          confidence: "Requiere conexión a backend para datos científicos"
+          confidence: null
         }
       }
     },

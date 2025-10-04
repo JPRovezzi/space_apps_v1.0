@@ -77,14 +77,6 @@ export const nasaAPI = {
     return api.get('/api/v1/nasa/fire-layers')
   },
 
-  // Obtener datos de incendios en tiempo real (últimos 7 días)
-  async getActiveFires(bbox) {
-    return api.get('/api/v1/nasa/active-fires', {
-      params: {
-        bbox: bbox || '-66,-35,-62,-31'
-      }
-    })
-  }
 }
 
 export default api

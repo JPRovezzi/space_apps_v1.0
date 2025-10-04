@@ -357,86 +357,10 @@ async def get_available_fire_layers():
     """Obtener lista de capas de incendios disponibles de NASA"""
     try:
         layers = [
-            {
-                "id": "MODIS_Terra_Thermal_Anomalies_All",
-                "name": "MODIS Terra Thermal Anomalies",
-                "description": "Detección de hotspots desde 2000",
-                "resolution": "1km",
-                "temporal_coverage": "2000 - Presente",
-                "update_frequency": "Diario"
-            },
-            {
-                "id": "MODIS_Aqua_Thermal_Anomalies_All",
-                "name": "MODIS Aqua Thermal Anomalies",
-                "description": "Detección de hotspots desde 2000",
-                "resolution": "1km",
-                "temporal_coverage": "2000 - Presente",
-                "update_frequency": "Diario"
-            },
-            {
-                "id": "VIIRS_SNPP_Thermal_Anomalies_375m_All",
-                "name": "VIIRS SNPP Thermal Anomalies",
-                "description": "Detección de alta resolución desde 2012",
-                "resolution": "375m",
-                "temporal_coverage": "2012 - Presente",
-                "update_frequency": "Diario"
-            },
-            {
-                "id": "MODIS_Terra_Data_No_Data",
-                "name": "MODIS Burned Area",
-                "description": "Áreas quemadas históricas",
-                "resolution": "500m",
-                "temporal_coverage": "2000 - Presente",
-                "update_frequency": "Mensual"
-            }
+            # Capas de incendios eliminadas - no funcionan de manera confiable
         ]
 
         return {"layers": layers}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error obteniendo capas disponibles: {str(e)}")
-
-@app.get("/api/v1/nasa/active-fires")
-async def get_active_fires(
-    bbox: str = Query("-66,-35,-62,-31", description="Bounding box Córdoba"),
-    days: int = Query(7, description="Días hacia atrás para buscar")
-):
-    """Obtener incendios activos en los últimos N días usando datos reales de NASA"""
-    try:
-        # Parsear bounding box
-        bbox_coords = [float(x) for x in bbox.split(",")]
-
-        # Obtener datos reales de FIRMS
-        fires_data = fetch_firms_data(country="ARG", days=days, source="MODIS_NRT")
-
-        # Filtrar por región de Córdoba
-        cordoba_fires = filter_fires_by_bbox(fires_data, bbox_coords)
-
-        # Convertir al formato esperado por el frontend
-        active_fires = []
-        for fire in cordoba_fires:
-            active_fires.append({
-                "latitude": fire["latitude"],
-                "longitude": fire["longitude"],
-                "brightness": fire["brightness"],
-                "confidence": fire["confidence"],
-                "acq_date": fire["acq_date"],
-                "satellite": fire["satellite"],
-                "instrument": fire["instrument"],
-                "frp": fire["frp"],
-                "daynight": fire["daynight"],
-                "estimated_area_ha": round(10 + (fire["confidence"] * 0.4), 1)
-            })
-
-        return {
-            "region": "Córdoba, Argentina",
-            "period_days": days,
-            "total_active_fires": len(active_fires),
-            "fires": active_fires,
-            "data_source": "NASA FIRMS",
-            "last_updated": datetime.now().isoformat(),
-            "confidence": "Datos reales de satélites MODIS con confianza >30%"
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Error obteniendo incendios activos de NASA: {str(e)}")
