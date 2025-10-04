@@ -5,11 +5,10 @@
 
     <MapControls
       :zoom-locked="zoomLocked"
-      :fire-incidents-count="visibleFireIncidentsCount"
       :date-range="dateRange"
       @toggle-zoom-lock="toggleZoomLock"
       @fit-bounds="fitToCordobaBounds"
-      @update-date-range="onDateRangeChange"
+      @update-date-range="updateDateRange"
     />
 
     <div class="map-container">
@@ -25,12 +24,7 @@
 
         <div class="sidebar-content">
           <div class="layers-list">
-            <div
-              v-for="layer in layers"
-              :key="layer.id"
-              class="layer-item"
-              :data-fire-layer="layer.type === 'nasa-fire'"
-            >
+            <div v-for="layer in layers" :key="layer.id" class="layer-item">
               <label class="layer-checkbox">
                 <input
                   type="checkbox"
@@ -135,35 +129,19 @@ export default {
           name: "Incendios Simulados",
           visible: true,
           layerRef: null,
-          type: "simulated-fire",
           icon: "🔥",
-          description: "Datos de ejemplo para desarrollo",
+          description: "Puntos de incendios detectados",
         },
       ],
-      dateRange: {
-        start: "2024-01-01",
-        end: "2024-12-31",
-      },
       zoomLocked: false, // Por defecto zoom bloqueado en Córdoba
-      simulatedFireIncidents: [],
-      filteredSimulatedIncidents: [],
+      dateRange: {
+        start: "2024-01-15",
+        end: "2024-10-08",
+      },
     };
-  },
-  computed: {
-    hasActiveFireLayers() {
-      return this.layers.some(
-        (layer) => layer.type === "simulated-fire" && layer.visible
-      );
-    },
-    visibleFireIncidentsCount() {
-      return this.layers.find((l) => l.id === "simulated-fire")?.visible
-        ? this.filteredSimulatedIncidents.length
-        : 0;
-    },
   },
   mounted() {
     this.initMap();
-    this.loadSimulatedFireIncidents(); // Cargar datos simulados
   },
   beforeUnmount() {
     if (this.map) {
@@ -278,23 +256,6 @@ export default {
         }
       }
     },
-    onDateRangeChange(newRange) {
-      // Validar que la fecha inicial no sea posterior a la final
-      if (new Date(newRange.start) > new Date(newRange.end)) {
-        console.warn("Fecha inicial no puede ser posterior a la fecha final");
-        return;
-      }
-
-      this.dateRange = newRange;
-
-      // Recargar datos filtrados si la capa está activa y no hay zoom
-      if (
-        this.layers.find((l) => l.id === "simulated-fire")?.visible &&
-        !this.isZooming
-      ) {
-        this.loadSimulatedFireIncidents();
-      }
-    },
     toggleZoomLock() {
       this.zoomLocked = !this.zoomLocked;
       this.updateMapBounds();
@@ -302,6 +263,11 @@ export default {
         // Si se bloquea el zoom, centrar automáticamente en Córdoba
         this.fitToCordobaBounds();
       }
+    },
+    updateDateRange(newDateRange) {
+      this.dateRange = newDateRange;
+      // Actualizar capa de incendios cuando cambie el rango de fechas
+      this.createFireIncidentsLayer();
     },
     fitToCordobaBounds() {
       if (this.map && this.cordobaGeoJson) {
@@ -330,77 +296,6 @@ export default {
         this.map.setMaxZoom(18);
         this.map.setMinZoom(1);
         this.map.options.maxBoundsViscosity = 0.0;
-      }
-    },
-    filterIncidentsByDateRange(incidents, startDate, endDate) {
-      return incidents.filter((incident) => {
-        const incidentDate = new Date(incident.acq_date);
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        return incidentDate >= start && incidentDate <= end;
-      });
-    },
-    loadSimulatedFireIncidents() {
-      // Cargar y filtrar datos simulados por rango de fechas
-      this.simulatedFireIncidents = simulatedFireIncidents;
-      this.filteredSimulatedIncidents = this.filterIncidentsByDateRange(
-        this.simulatedFireIncidents,
-        this.dateRange.start,
-        this.dateRange.end
-      );
-      this.loadFilteredFireIncidents();
-    },
-    loadFilteredFireIncidents() {
-      const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
-      if (!simulatedLayer) return;
-
-      // Evitar operaciones de capa durante animaciones de zoom
-      if (this.isZooming) return;
-
-      // Limpiar layer existente
-      if (simulatedLayer.layerRef) {
-        this.map.removeLayer(simulatedLayer.layerRef);
-      }
-
-      // Crear nuevo layer group para incendios simulados
-      const simulatedLayerGroup = L.layerGroup();
-
-      // Agregar marcadores para cada incendio simulado filtrado
-      this.filteredSimulatedIncidents.forEach((incident) => {
-        const marker = L.marker([incident.latitude, incident.longitude], {
-          icon: L.divIcon({
-            className: "fire-marker",
-            html: "🔥",
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-          }),
-        });
-
-        // Popup con información del incendio simulado
-        const popupContent = `
-          <div class="fire-popup">
-            <h4>🔥 Incendio Simulado</h4>
-            <p><strong>Fecha:</strong> ${incident.acq_date}</p>
-            <p><strong>Hora:</strong> ${incident.acq_time}</p>
-            <p><strong>Confianza:</strong> ${incident.confidence}%</p>
-            <p><strong>Brillo:</strong> ${incident.brightness}K</p>
-            <p><strong>Satélite:</strong> ${incident.satellite}</p>
-            <p><strong>Día/Noche:</strong> ${
-              incident.daynight === "D" ? "Día" : "Noche"
-            }</p>
-            <p style="color: #ff6b35; font-style: italic;"><strong>📝 Datos de ejemplo</strong></p>
-          </div>
-        `;
-
-        marker.bindPopup(popupContent);
-        simulatedLayerGroup.addLayer(marker);
-      });
-
-      simulatedLayer.layerRef = simulatedLayerGroup;
-
-      // Agregar al mapa si la capa está visible
-      if (simulatedLayer.visible && this.map) {
-        simulatedLayerGroup.addTo(this.map);
       }
     },
     formatLastUpdate(timestamp) {
@@ -484,11 +379,8 @@ export default {
         routeLayer.layerRef = routeLine;
       }
 
-      // 5. Inicializar referencia para incendios simulados (se poblará después)
-      const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
-      if (simulatedLayer) {
-        simulatedLayer.layerRef = null; // Se asignará cuando se carguen los datos
-      }
+      // 5. Crear capa de incendios simulados (filtrados por fecha)
+      this.createFireIncidentsLayer();
     },
     addCoordinatesControl() {
       // Crear control personalizado para coordenadas
@@ -525,6 +417,73 @@ export default {
 
       // Agregar el control al mapa
       new CoordinatesControl().addTo(this.map);
+    },
+    createFireIncidentsLayer() {
+      // Filtrar incendios por rango de fechas
+      const filteredIncidents = simulatedFireIncidents.filter((incident) => {
+        const incidentDate = new Date(incident.acq_date);
+        const startDate = new Date(this.dateRange.start);
+        const endDate = new Date(this.dateRange.end);
+        return incidentDate >= startDate && incidentDate <= endDate;
+      });
+
+      const fireMarkers = [];
+
+      filteredIncidents.forEach((incident) => {
+        // Crear círculo rojo para cada incendio
+        const fireCircle = L.circle([incident.latitude, incident.longitude], {
+          color: "red",
+          fillColor: "#ff0000",
+          fillOpacity: 0.8,
+          radius: 500, // Radio fijo de 500 metros
+          weight: 2,
+        }).bindPopup(`
+            <div style="font-family: Arial, sans-serif; font-size: 12px;">
+              <strong>🔥 Incendio Detectado</strong><br>
+              <strong>Fecha:</strong> ${incident.acq_date}<br>
+              <strong>Hora:</strong> ${incident.acq_time}<br>
+              <strong>Confianza:</strong> ${incident.confidence}%<br>
+              <strong>Brillo:</strong> ${incident.brightness} K<br>
+              <strong>Satélite:</strong> ${incident.satellite}<br>
+              <strong>Modo:</strong> ${
+                incident.daynight === "D" ? "Diurno" : "Nocturno"
+              }<br>
+              <strong>Coordenadas:</strong> ${incident.latitude.toFixed(
+                4
+              )}, ${incident.longitude.toFixed(4)}
+            </div>
+          `);
+
+        fireMarkers.push(fireCircle);
+      });
+
+      // Remover capa anterior si existe
+      const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
+      if (simulatedLayer && simulatedLayer.layerRef) {
+        this.map.removeLayer(simulatedLayer.layerRef);
+      }
+
+      // Crear nueva capa
+      const fireLayerGroup = L.layerGroup(fireMarkers);
+
+      // Solo añadir al mapa si la capa está visible
+      if (simulatedLayer && simulatedLayer.visible) {
+        fireLayerGroup.addTo(this.map);
+      }
+
+      // Actualizar referencia
+      if (simulatedLayer) {
+        simulatedLayer.layerRef = fireLayerGroup;
+      }
+    },
+  },
+  watch: {
+    dateRange: {
+      handler() {
+        // Actualizar capa de incendios cuando cambie el rango de fechas
+        this.createFireIncidentsLayer();
+      },
+      deep: true,
     },
   },
 };
@@ -825,129 +784,5 @@ export default {
     bottom: 15px !important;
     right: 15px !important;
   }
-}
-
-/* NASA Fire Controls Styles */
-.time-controls {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.time-title {
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.date-control {
-  margin-bottom: 1rem;
-}
-
-.control-label {
-  display: block;
-  color: #ffffff;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.date-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #000000;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.date-input:focus {
-  outline: none;
-  border-color: #0369a1;
-  box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.2);
-}
-
-/* Fire layer highlighting */
-.layer-item[data-fire-layer="true"] {
-  position: relative;
-}
-
-.layer-item[data-fire-layer="true"]::before {
-  content: "";
-  position: absolute;
-  left: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 60%;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border-radius: 2px;
-  opacity: 0.8;
-}
-
-/* Responsive adjustments for fire controls */
-@media (max-width: 768px) {
-  .time-controls {
-    padding: 0.75rem;
-    margin-top: 0.75rem;
-  }
-
-  .time-title {
-    font-size: 0.9rem;
-  }
-
-  .control-label {
-    font-size: 0.8rem;
-  }
-
-  .date-input {
-    font-size: 0.8rem;
-    padding: 0.4rem;
-  }
-}
-
-/* Fire Markers Styles */
-.fire-marker {
-  font-size: 24px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  filter: drop-shadow(0 0 8px rgba(255, 100, 0, 0.8));
-  animation: fire-pulse 2s ease-in-out infinite;
-}
-
-@keyframes fire-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-.fire-popup {
-  font-family: Arial, sans-serif;
-  max-width: 250px;
-}
-
-.fire-popup h4 {
-  margin: 0 0 8px 0;
-  color: #e74c3c;
-  font-size: 14px;
-}
-
-.fire-popup p {
-  margin: 4px 0;
-  font-size: 12px;
-  line-height: 1.4;
 }
 </style>
