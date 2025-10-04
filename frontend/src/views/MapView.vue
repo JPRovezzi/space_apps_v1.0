@@ -63,7 +63,7 @@ export default {
           maxBoundsViscosity: 1.0 // Hace que los límites sean estrictos
         })
 
-      // Añadir capa de tiles
+        // Añadir capa de tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map)
@@ -77,36 +77,75 @@ export default {
           fillColor: 'rgba(255, 255, 255, 0.15)',
           fillOpacity: 0.2
         },
-        onEachFeature: this.onEachFeature
+        onEachFeature: (feature, layer) => {
+          layer.on({
+            mouseover: (e) => {
+              const layer = e.target;
+              layer.setStyle({
+                weight: 4,
+                color: '#ffffff',
+                fillOpacity: 0.3
+              });
+            },
+            mouseout: (e) => {
+              const layer = e.target;
+              layer.setStyle({
+                color: '#ffffff',
+                weight: 3,
+                opacity: 0.9,
+                fillColor: 'rgba(255, 255, 255, 0.15)',
+                fillOpacity: 0.2
+              });
+            }
+          });
+        }
       }).addTo(this.map)
 
       // Ajustar el mapa exactamente a los límites de Córdoba (sin padding)
       this.map.fitBounds(this.geoJsonLayer.getBounds(), {
         padding: [0, 0] // Sin padding para ajuste perfecto al ancho del polígono
       })
+
+      // Ejemplos de elementos que se pueden agregar sobre el mapa:
+
+      // 1. Marcador con popup
+      L.marker([-31.4167, -64.1833])
+        .addTo(this.map)
+        .bindPopup('Córdoba Capital<br><b>Población: ~1.5M</b>')
+        .openPopup();
+
+      // 2. Círculo (ejemplo de zona de influencia)
+      L.circle([-32.5, -63.5], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.3,
+        radius: 30000 // 30km de radio
+      }).addTo(this.map)
+      .bindPopup('Zona de ejemplo');
+
+      // 3. Polígono adicional (ejemplo de sub-región)
+      L.polygon([
+        [-31.0, -63.0],
+        [-31.5, -63.0],
+        [-31.5, -63.5],
+        [-31.0, -63.5]
+      ], {
+        color: 'blue',
+        fillColor: 'blue',
+        fillOpacity: 0.2
+      }).addTo(this.map);
+
+      // 4. Línea (ejemplo de ruta o límite)
+      L.polyline([
+        [-30.0, -64.0],
+        [-31.0, -64.5],
+        [-32.0, -65.0]
+      ], {
+        color: 'green',
+        weight: 3,
+        opacity: 0.7
+      }).addTo(this.map);
       }
-    },
-    onEachFeature(feature, layer) {
-      layer.on({
-        mouseover: (e) => {
-          const layer = e.target;
-          layer.setStyle({
-            weight: 4,
-            color: '#ffffff',
-            fillOpacity: 0.3
-          });
-        },
-        mouseout: (e) => {
-          const layer = e.target;
-          layer.setStyle({
-            color: '#ffffff',
-            weight: 3,
-            opacity: 0.9,
-            fillColor: 'rgba(255, 255, 255, 0.15)',
-            fillOpacity: 0.2
-          });
-        }
-      });
     }
   }
 }
