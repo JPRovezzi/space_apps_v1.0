@@ -1,6 +1,30 @@
 <template>
   <div class="risk-view">
     <MainHeader title="Mapa de riesgos" back-route="/" />
+
+    <!-- Texto informativo ocultable -->
+    <div class="info-text-container" :class="{ expanded: showInfoText }">
+      <button
+        @click="toggleInfoText"
+        class="info-toggle-btn"
+        :title="showInfoText ? 'Ocultar información' : 'Mostrar información'"
+      >
+        <span class="icon">{{ showInfoText ? "📖" : "ℹ️" }}</span>
+        <span class="text">{{
+          showInfoText ? "Ocultar información" : "Mostrar información"
+        }}</span>
+      </button>
+
+      <div v-show="showInfoText" class="info-content">
+        <p>
+          Este es un mapa para ver distintas capas de información y estimar
+          riesgos para la expansión de asentamientos humanos. Es una herramienta
+          en desarrollo. Por el momento muestra la vista de la provincia de
+          Córdoba, Argentina.
+        </p>
+      </div>
+    </div>
+
     <RiskToolbar
       @background-change="handleBackgroundChange"
       @layer-toggle="handleLayerToggle"
@@ -161,6 +185,7 @@ export default {
         { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
       showMapControls: true, // Mostrar controles del mapa por defecto
+      showInfoText: true, // Mostrar texto informativo por defecto
     };
   },
   computed: {
@@ -287,6 +312,10 @@ export default {
       this.showMapControls = show;
     },
 
+    toggleInfoText() {
+      this.showInfoText = !this.showInfoText;
+    },
+
     // Cálculos geográficos para rosa de los vientos y escala
     calculateGeographicDistance(lat1, lon1, lat2, lon2) {
       // Fórmula de distancia haversine (distancia en km entre dos puntos geográficos)
@@ -373,6 +402,74 @@ export default {
   color: var(--text-primary);
 }
 
+/* Contenedor del texto informativo */
+.info-text-container {
+  margin: 1rem 2rem 0 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: fit-content;
+  min-width: 200px;
+  margin-left: auto;
+  margin-right: 2rem;
+}
+
+.info-text-container.expanded {
+  width: calc(100vw - 4rem);
+  max-width: none;
+  margin-left: 2rem;
+  margin-right: 2rem;
+}
+
+/* Botón toggle del instructivo */
+.info-toggle-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.info-toggle-btn .icon {
+  font-size: 1.1rem;
+}
+
+/* Contenido del instructivo */
+.info-content {
+  padding: 1rem 2rem 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.info-content p {
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: justify;
+  width: 100%;
+  max-width: none;
+}
+
 .content {
   padding: 2rem;
   display: flex;
@@ -454,6 +551,40 @@ export default {
     right: 5px;
     font-size: 0.8rem;
     padding: 6px 8px;
+  }
+
+  .info-text-container {
+    margin: 1rem 1rem 0 auto;
+    width: fit-content;
+    min-width: 160px;
+    margin-right: 1rem;
+  }
+
+  .info-text-container.expanded {
+    width: calc(100vw - 2rem);
+    max-width: none;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .info-toggle-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    justify-content: center;
+  }
+
+  .info-toggle-btn .icon {
+    font-size: 1rem;
+  }
+
+  .info-content {
+    padding: 0.75rem 1.5rem 1rem 1.5rem;
+  }
+
+  .info-content p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: justify;
   }
 }
 
