@@ -1,18 +1,57 @@
 <template>
   <div id="app">
+    <MainHeader
+      :title="headerTitle"
+      :back-route="headerBackRoute"
+      :show-title="headerShowTitle"
+      :show-back-button="headerShowBackButton"
+      :show-header-buttons="headerShowButtons"
+    />
     <router-view />
   </div>
 </template>
 
 <script>
+import MainHeader from "@/components/MainHeader.vue";
 import { COLORS } from "@/constants/colors.js";
 
 export default {
   name: "App",
+  components: {
+    MainHeader,
+  },
   data() {
     return {
       colors: COLORS,
     };
+  },
+  computed: {
+    headerTitle() {
+      switch (this.$route.path) {
+        case "/risk":
+          return "Mapa de riesgos";
+        default:
+          return "";
+      }
+    },
+    headerBackRoute() {
+      switch (this.$route.path) {
+        case "/risk":
+          return "/";
+        default:
+          return "/";
+      }
+    },
+    headerShowTitle() {
+      return this.$route.path === "/risk";
+    },
+    headerShowBackButton() {
+      return this.$route.path === "/risk";
+    },
+    headerShowButtons() {
+      // Mostrar botones en todas las rutas por ahora
+      return true;
+    },
   },
   mounted() {
     // Aplicar las variables CSS dinámicamente para asegurar que estén disponibles
