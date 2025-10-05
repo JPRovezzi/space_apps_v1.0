@@ -26,12 +26,12 @@
       </button>
 
       <!-- Zoom In -->
-      <button class="toolbar-btn" title="Acercar">
+      <button class="toolbar-btn hidden-zoom" title="Acercar">
         <span class="icon">🔍+</span>
       </button>
 
       <!-- Zoom Out -->
-      <button class="toolbar-btn" title="Alejar">
+      <button class="toolbar-btn hidden-zoom" title="Alejar">
         <span class="icon">🔍-</span>
       </button>
 
@@ -225,6 +225,10 @@ export default {
 
 .icon {
   font-size: 1.2rem;
+}
+
+.hidden-zoom {
+  display: none;
 }
 
 @media (max-width: 768px) {
