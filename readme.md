@@ -11,7 +11,7 @@ Astrochingolo es una plataforma web que combina datos satelitales de NASA con an
 La plataforma integra múltiples fuentes de datos geoespaciales y satelitales para crear mapas de riesgo interactivos:
 
 1. **Captura de Datos**: Integra datos de NASA FIRMS (incendios), datos geoespaciales de la provincia de Córdoba y capas de riesgo generadas por algoritmos de análisis
-2. **Procesamiento**: Aplica técnicas de normalización estadística (Min-Max, Z-Score, Robust Scaling) para estandarizar datos heterogéneos
+2. **Procesamiento**: Aplica técnicas de normalización estadística para estandarizar datos heterogéneos
 3. **Visualización**: Crea mapas superpuestos con capas de riesgo codificadas por colores, permitiendo análisis visual intuitivo
 4. **Análisis Interactivo**: Los usuarios pueden activar/desactivar capas, ajustar opacidades y explorar riesgos específicos por ubicación
 
