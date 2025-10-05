@@ -44,6 +44,7 @@
       @layer-opacity-change="handleLayerOpacityChange"
       @legend-toggle="handleLegendToggle"
       @map-controls-toggle="handleMapControlsToggle"
+      @download-snapshot="takeSnapshot"
     />
     <div class="content">
       <div
@@ -168,6 +169,7 @@ import CordobaContour from "@/components/CordobaContour.vue";
 import RiskLegend from "@/components/RiskLegend.vue";
 import { CORDOBA_BOUNDS } from "@/constants/geographicBounds.js";
 import { COLORS } from "@/constants/colors.js";
+import html2canvas from "html2canvas";
 
 export default {
   name: "RiskView",
@@ -434,6 +436,50 @@ export default {
         return 5;
       } else {
         return Math.round(distance / 10) * 10;
+      }
+    },
+
+    async takeSnapshot() {
+      try {
+        // Ocultar temporalmente las coordenadas para el snapshot
+        const coordinatesWereVisible = this.showCoordinates;
+        this.showCoordinates = false;
+
+        // Esperar a que Vue actualice el DOM
+        await this.$nextTick();
+
+        // Obtener el elemento del contenedor del mapa
+        const mapElement = this.$el.querySelector(".image-container");
+
+        // Configurar html2canvas con opciones optimizadas
+        const canvas = await html2canvas(mapElement, {
+          backgroundColor: null, // Mantener fondo transparente
+          scale: 2, // Alta resolución
+          useCORS: true, // Permitir imágenes cross-origin
+          allowTaint: false,
+          logging: false, // Desactivar logs
+          width: this.IMAGE_WIDTH,
+          height: this.IMAGE_HEIGHT,
+        });
+
+        // Restaurar la visibilidad de las coordenadas
+        this.showCoordinates = coordinatesWereVisible;
+
+        // Convertir canvas a blob y descargar
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "mapa-captura.png";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      } catch (error) {
+        console.error("Error al generar el snapshot:", error);
+        // Restaurar coordenadas en caso de error
+        this.showCoordinates = true;
       }
     },
   },
