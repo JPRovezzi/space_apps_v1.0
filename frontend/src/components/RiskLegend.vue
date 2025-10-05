@@ -47,7 +47,7 @@ export default {
         },
         1: {
           color: "#f9d7cc",
-          description: "Mínimo",
+          description: "",
         },
         2: {
           color: "#f4b39f",
@@ -83,7 +83,7 @@ export default {
         },
         10: {
           color: "#9f2600",
-          description: "Máximo",
+          description: "",
         },
       },
     };
