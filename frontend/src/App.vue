@@ -20,7 +20,7 @@ export default {
 html,
 body {
   height: 100%;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
+  background: linear-gradient(135deg, #0960e1 0%, #4a90e2 50%, #7bb3ff 100%);
 }
 
 #app {
@@ -30,6 +30,6 @@ body {
   text-align: center;
   color: #2c3e50;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
+  background: linear-gradient(135deg, #0960e1 0%, #4a90e2 50%, #7bb3ff 100%);
 }
 </style>

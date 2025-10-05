@@ -13,7 +13,7 @@
           <h3>📊 Visualización</h3>
           <p>Gráficos interactivos de resultados</p>
         </div>
-        <button class="btn-map">🗺️ Ver Mapa</button>
+        <router-link to="/risk" class="btn-map"> 🗺️ Ver Mapa </router-link>
       </div>
     </div>
   </div>
@@ -28,7 +28,7 @@ export default {
 <style scoped>
 .home {
   height: 100vh;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
+  background: linear-gradient(135deg, #0960e1 0%, #4a90e2 50%, #7bb3ff 100%);
   color: white;
   display: flex;
   flex-direction: column;
@@ -125,6 +125,7 @@ export default {
   transition: all 0.3s ease;
   font-size: 1.2rem;
   font-weight: bold;
+  text-decoration: none;
 }
 
 .btn-map:hover {
