@@ -15,14 +15,25 @@
 
       <div v-show="showInfoText" class="info-content">
         <p>
-          Este es un mapa para ver distintas capas de información y estimar
-          riesgos para la expansión de asentamientos humanos. Es una herramienta
-          en desarrollo. Por el momento muestra la vista de la provincia de
-          Córdoba, Argentina. Al mostrar leyenda se muestra el color de cada
-          valor del índice de riesgo del 1 al 10. Los datos faltantas de
-          muestran en un color especificado. Se excluye las zonas ya
-          urbanizadas, zonas protegidas y los cuerpos de agua ya existentes y se
-          las denomina como área no válida.
+          Esta es una herramienta interactiva en desarrollo. Usted podrá
+          visualizar distintas capas de información, extraídas de servicios
+          geosatelitales de la NASA (<a
+            href="https://worldview.earthdata.nasa.gov/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >https://worldview.earthdata.nasa.gov/</a
+          >) y del IGN de Argentina (<a
+            href="https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG"
+            target="_blank"
+            rel="noopener noreferrer"
+            >https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG</a
+          >). Algunas de estas capas se operan matemáticamente según una fórmula
+          de Índice de Riesgo propuesta, para obtener un mapa resultante de
+          Índice de Riesgo, a partir del cual se pueden identificar áreas
+          favorables o no para la expansión urbana. Este mapa tiene una escala
+          del 1 al 10, o valores nulos en áreas donde no puede urbanizarse por
+          la presencia de Áreas Protegidas, urbanizaciones preexistentes o
+          cuerpos de agua y cursos fluviales.
         </p>
       </div>
     </div>
@@ -478,6 +489,19 @@ export default {
   max-width: none;
 }
 
+.info-content p a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--neon-yellow);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.info-content p a:hover {
+  color: var(--neon-yellow);
+  text-decoration-color: var(--neon-yellow);
+}
+
 .content {
   padding: 2rem;
   display: flex;
@@ -593,6 +617,19 @@ export default {
     font-size: 0.9rem;
     line-height: 1.5;
     text-align: justify;
+  }
+
+  .info-content p a {
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-decoration-color: var(--neon-yellow);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+
+  .info-content p a:hover {
+    color: var(--neon-yellow);
+    text-decoration-color: var(--neon-yellow);
   }
 }
 
