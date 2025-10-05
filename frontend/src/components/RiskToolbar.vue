@@ -43,6 +43,15 @@
       >
         <span class="icon">📚</span>
       </button>
+
+      <!-- Coordenadas -->
+      <button
+        class="toolbar-btn"
+        @click="showCoordinatesModal = true"
+        title="Ver coordenadas"
+      >
+        <span class="icon">📍</span>
+      </button>
     </div>
 
     <!-- Modal de selección de colores -->
@@ -60,24 +69,33 @@
       @layer-toggle="handleLayerToggle"
       @layer-opacity-change="handleLayerOpacityChange"
     />
+
+    <!-- Modal de coordenadas -->
+    <CoordinatesModal
+      :show="showCoordinatesModal"
+      @close="showCoordinatesModal = false"
+    />
   </div>
 </template>
 
 <script>
 import ColorPickerModal from "./ColorPickerModal.vue";
 import LayersModal from "./LayersModal.vue";
+import CoordinatesModal from "./CoordinatesModal.vue";
 
 export default {
   name: "RiskToolbar",
   components: {
     ColorPickerModal,
     LayersModal,
+    CoordinatesModal,
   },
   data() {
     return {
       currentBackground: "marble", // marble por defecto
       showColorPicker: false,
       showLayersModal: false,
+      showCoordinatesModal: false,
       layers: [
         { name: "Inundaciones", active: false, opacity: 70 },
         { name: "Deslizamientos", active: false, opacity: 70 },
