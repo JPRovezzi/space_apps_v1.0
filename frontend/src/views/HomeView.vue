@@ -10,8 +10,8 @@
     <div class="visualization-container">
       <div class="shared-background">
         <div class="feature-card">
-          <h3>📊 Visualización</h3>
-          <p>Gráficos interactivos de resultados</p>
+          <h3>📊 Índice de Riesgo</h3>
+          <p>Mapa interactivo</p>
         </div>
         <router-link to="/risk" class="btn-map"> 🗺️ Ver Mapa </router-link>
       </div>
