@@ -59,8 +59,8 @@
       >
         <!-- Capas de riesgo (sobre el fondo, debajo del contorno) -->
         <div
-          v-for="(layer, index) in layers"
-          :key="index"
+          v-for="layer in layers"
+          :key="layer.id"
           v-show="layer.active"
           class="layer-overlay"
           :style="{
@@ -187,21 +187,43 @@ export default {
       showCoordinates: false, // Controla la visibilidad de las coordenadas
       mouseCoordinates: { lat: 0, lon: 0 }, // Coordenadas actuales del mouse
       layers: [
-        { name: "Peligro de inundación", active: false, opacity: 70 },
-        { name: "Procesos de remoción en masa", active: false, opacity: 70 },
-        { name: "Presencia de Urbanización", active: false, opacity: 70 },
         {
+          id: "flood",
+          name: "Peligro de inundación",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "landslide",
+          name: "Procesos de remoción en masa",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "protected",
+          name: "Áreas protegidas",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "urban",
+          name: "Presencia de Urbanización",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "water",
           name: "Cuerpos de Agua y Cursos Fluviales",
           active: false,
           opacity: 70,
         },
+        { id: "risk", name: "Riesgo", active: false, opacity: 70 },
         {
+          id: "expansion",
           name: "Probabilidad de expansión urbana",
           active: false,
           opacity: 70,
         },
-        { name: "Riesgo", active: false, opacity: 70 },
-        { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
       showMapControls: true, // Mostrar controles del mapa por defecto
       showInfoText: true, // Mostrar texto informativo por defecto
@@ -267,12 +289,18 @@ export default {
       }
     },
 
-    handleLayerToggle({ index, layer }) {
-      this.layers[index].active = layer.active;
+    handleLayerToggle({ layerId, layer }) {
+      const layerToUpdate = this.layers.find((l) => l.id === layerId);
+      if (layerToUpdate) {
+        layerToUpdate.active = layer.active;
+      }
     },
 
-    handleLayerOpacityChange({ index, layer }) {
-      this.layers[index].opacity = layer.opacity;
+    handleLayerOpacityChange({ layerId, layer }) {
+      const layerToUpdate = this.layers.find((l) => l.id === layerId);
+      if (layerToUpdate) {
+        layerToUpdate.opacity = layer.opacity;
+      }
     },
 
     handleLegendToggle(show) {

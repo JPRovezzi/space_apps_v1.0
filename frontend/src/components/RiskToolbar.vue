@@ -122,21 +122,43 @@ export default {
       showLegend: false,
       showMapControls: true, // Mostrar controles por defecto
       layers: [
-        { name: "Peligro de inundación", active: false, opacity: 70 },
-        { name: "Procesos de remoción en masa", active: false, opacity: 70 },
-        { name: "Presencia de Urbanización", active: false, opacity: 70 },
         {
+          id: "flood",
+          name: "Peligro de inundación",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "landslide",
+          name: "Procesos de remoción en masa",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "protected",
+          name: "Áreas protegidas",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "urban",
+          name: "Presencia de Urbanización",
+          active: false,
+          opacity: 70,
+        },
+        {
+          id: "water",
           name: "Cuerpos de Agua y Cursos Fluviales",
           active: false,
           opacity: 70,
         },
+        { id: "risk", name: "Riesgo", active: false, opacity: 70 },
         {
+          id: "expansion",
           name: "Probabilidad de expansión urbana",
           active: false,
           opacity: 70,
         },
-        { name: "Riesgo", active: false, opacity: 70 },
-        { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
     };
   },
@@ -151,20 +173,26 @@ export default {
       this.$emit("background-change", colorData);
     },
 
-    handleLayerToggle(index) {
-      this.layers[index].active = !this.layers[index].active;
-      this.$emit("layer-toggle", {
-        index,
-        layer: this.layers[index],
-      });
+    handleLayerToggle(layerId) {
+      const layer = this.layers.find((l) => l.id === layerId);
+      if (layer) {
+        layer.active = !layer.active;
+        this.$emit("layer-toggle", {
+          layerId,
+          layer,
+        });
+      }
     },
 
-    handleLayerOpacityChange({ index, opacity }) {
-      this.layers[index].opacity = opacity;
-      this.$emit("layer-opacity-change", {
-        index,
-        layer: this.layers[index],
-      });
+    handleLayerOpacityChange({ layerId, opacity }) {
+      const layer = this.layers.find((l) => l.id === layerId);
+      if (layer) {
+        layer.opacity = opacity;
+        this.$emit("layer-opacity-change", {
+          layerId,
+          layer,
+        });
+      }
     },
 
     toggleLegend() {
