@@ -12,6 +12,16 @@
         }"
       >
         <!-- Aquí irá la imagen del mapa de riesgos -->
+        <CordobaContour
+          :width="IMAGE_WIDTH"
+          :height="IMAGE_HEIGHT"
+          :bounds="{
+            MAX_LAT: MAX_LAT,
+            MIN_LAT: MIN_LAT,
+            MAX_LON: MAX_LON,
+            MIN_LON: MIN_LON,
+          }"
+        />
       </div>
     </div>
   </div>
@@ -20,6 +30,7 @@
 <script>
 import MainHeader from "@/components/MainHeader.vue";
 import RiskToolbar from "@/components/RiskToolbar.vue";
+import CordobaContour from "@/components/CordobaContour.vue";
 import { CORDOBA_BOUNDS } from "@/constants/geographicBounds.js";
 
 export default {
@@ -27,6 +38,7 @@ export default {
   components: {
     MainHeader,
     RiskToolbar,
+    CordobaContour,
   },
   data() {
     return {
