@@ -11,7 +11,7 @@
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Acciones</th>
+              <th>Acciones: Activar/Desactivar y Opacidad</th>
             </tr>
           </thead>
           <tbody>

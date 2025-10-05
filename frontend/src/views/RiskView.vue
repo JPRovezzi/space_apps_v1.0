@@ -18,7 +18,11 @@
           Este es un mapa para ver distintas capas de información y estimar
           riesgos para la expansión de asentamientos humanos. Es una herramienta
           en desarrollo. Por el momento muestra la vista de la provincia de
-          Córdoba, Argentina.
+          Córdoba, Argentina. Al mostrar leyenda se muestra el color de cada
+          valor del índice de riesgo del 1 al 10. Los datos faltantas de
+          muestran en un color especificado. Se excluye las zonas ya
+          urbanizadas, zonas protegidas y los cuerpos de agua ya existentes y se
+          las denomina como área no válida.
         </p>
       </div>
     </div>
