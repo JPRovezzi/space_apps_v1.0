@@ -1,0 +1,52 @@
+require("dotenv").config();
+
+const config = {
+  // Server configuration
+  port: process.env.PORT || 3000,
+  nodeEnv: process.env.NODE_ENV || "development",
+
+  // CORS configuration
+  cors: {
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(",")
+      : ["http://localhost:8080", "http://localhost:3000"],
+    credentials: true,
+  },
+
+  // Database configuration (for future use)
+  database: {
+    url: process.env.DATABASE_URL,
+  },
+
+  // Security configuration
+  security: {
+    jwtSecret:
+      process.env.JWT_SECRET || "your-default-secret-key-change-in-production",
+    sessionTimeout: process.env.SESSION_TIMEOUT || "24h",
+  },
+
+  // API configuration
+  api: {
+    version: "v1",
+    prefix: "/api",
+  },
+
+  // External APIs (for space data)
+  external: {
+    nasa: {
+      apiKey: "6Ra3EH6XjH0gZ8qb7hPKfofq21JIHiaMO0kkuJ5r", // NASA API Key
+      baseUrl: "https://api.nasa.gov",
+      firmsBaseUrl: "https://firms.modaps.eosdis.nasa.gov/api/",
+      cmrBaseUrl: "https://cmr.earthdata.nasa.gov/search/",
+      worldviewBaseUrl: "https://worldview.earthdata.nasa.gov/",
+      // Rate limiting: ~1000 requests per day for free tier
+      rateLimit: {
+        maxRequestsPerDay: 1000,
+        maxRequestsPerHour: 50,
+      },
+    },
+    // Add more external APIs as needed
+  },
+};
+
+module.exports = config;

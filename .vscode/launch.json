@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Node.js Backend",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/backend/server.js",
+            "cwd": "${workspaceFolder}/backend",
+            "console": "integratedTerminal",
+            "autoAttachChildProcesses": true,
+            "restart": true,
+            "env": {
+                "NODE_ENV": "development"
+            }
+        },
+        {
+            "name": "Debug Frontend",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/frontend/node_modules/.bin/vue-cli-service",
+            "args": ["serve"],
+            "cwd": "${workspaceFolder}/frontend",
+            "console": "integratedTerminal",
+            "autoAttachChildProcesses": true,
+            "restart": true
+        }
+    ]
+}
