@@ -97,44 +97,6 @@
                 stroke="#ffffff"
                 stroke-width="1"
               />
-              <!-- Etiquetas cardinales -->
-              <text
-                x="30"
-                y="14"
-                text-anchor="middle"
-                fill="#ff0000"
-                font-size="10"
-                font-weight="bold"
-              >
-                N
-              </text>
-              <text
-                x="30"
-                y="48"
-                text-anchor="middle"
-                fill="white"
-                font-size="8"
-              >
-                S
-              </text>
-              <text
-                x="48"
-                y="34"
-                text-anchor="middle"
-                fill="white"
-                font-size="8"
-              >
-                E
-              </text>
-              <text
-                x="12"
-                y="34"
-                text-anchor="middle"
-                fill="white"
-                font-size="8"
-              >
-                O
-              </text>
             </svg>
           </div>
 
