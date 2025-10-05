@@ -172,11 +172,19 @@ export default {
       showCoordinates: false, // Controla la visibilidad de las coordenadas
       mouseCoordinates: { lat: 0, lon: 0 }, // Coordenadas actuales del mouse
       layers: [
-        { name: "Inundaciones", active: false, opacity: 70 },
-        { name: "Deslizamientos", active: false, opacity: 70 },
-        { name: "Urbano", active: false, opacity: 70 },
-        { name: "Agua", active: false, opacity: 70 },
-        { name: "Expansión", active: false, opacity: 70 },
+        { name: "Peligro de inundación", active: false, opacity: 70 },
+        { name: "Procesos de remoción en masa", active: false, opacity: 70 },
+        { name: "Presencia de Urbanización", active: false, opacity: 70 },
+        {
+          name: "Cuerpos de Agua y Cursos Fluviales",
+          active: false,
+          opacity: 70,
+        },
+        {
+          name: "Probabilidad de expansión urbana",
+          active: false,
+          opacity: 70,
+        },
         { name: "Riesgo", active: false, opacity: 70 },
         { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
@@ -258,11 +266,11 @@ export default {
 
     getLayerImage(layerName) {
       const imageMap = {
-        Inundaciones: "flood.jpeg",
-        Deslizamientos: "landslide.jpeg",
-        Urbano: "urban.jpeg",
-        Agua: "water.jpeg",
-        Expansión: "expansion.jpeg",
+        "Peligro de inundación": "flood.jpeg",
+        "Procesos de remoción en masa": "landslide.jpeg",
+        "Presencia de Urbanización": "urban.jpeg",
+        "Cuerpos de Agua y Cursos Fluviales": "water.jpeg",
+        "Probabilidad de expansión urbana": "expansion.jpeg",
         Riesgo: "riesgo.jpeg",
         "Áreas protegidas": "areas_protegidas_monocromatico.jpg",
       };

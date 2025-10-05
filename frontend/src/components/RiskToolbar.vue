@@ -122,11 +122,19 @@ export default {
       showLegend: false,
       showMapControls: true, // Mostrar controles por defecto
       layers: [
-        { name: "Inundaciones", active: false, opacity: 70 },
-        { name: "Deslizamientos", active: false, opacity: 70 },
-        { name: "Urbano", active: false, opacity: 70 },
-        { name: "Agua", active: false, opacity: 70 },
-        { name: "Expansión", active: false, opacity: 70 },
+        { name: "Peligro de inundación", active: false, opacity: 70 },
+        { name: "Procesos de remoción en masa", active: false, opacity: 70 },
+        { name: "Presencia de Urbanización", active: false, opacity: 70 },
+        {
+          name: "Cuerpos de Agua y Cursos Fluviales",
+          active: false,
+          opacity: 70,
+        },
+        {
+          name: "Probabilidad de expansión urbana",
+          active: false,
+          opacity: 70,
+        },
         { name: "Riesgo", active: false, opacity: 70 },
         { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
