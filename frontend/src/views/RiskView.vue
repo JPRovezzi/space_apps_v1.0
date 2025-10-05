@@ -90,6 +90,7 @@ export default {
         { name: "Agua", active: false, opacity: 70 },
         { name: "Expansión", active: false, opacity: 70 },
         { name: "Riesgo", active: false, opacity: 70 },
+        { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
     };
   },
@@ -173,6 +174,7 @@ export default {
         Agua: "water.jpeg",
         Expansión: "expansion.jpeg",
         Riesgo: "riesgo.jpeg",
+        "Áreas protegidas": "areas_protegidas_monocromatico.jpg",
       };
       return imageMap[layerName] || "";
     },

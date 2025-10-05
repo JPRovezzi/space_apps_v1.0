@@ -114,6 +114,7 @@ export default {
         { name: "Agua", active: false, opacity: 70 },
         { name: "Expansión", active: false, opacity: 70 },
         { name: "Riesgo", active: false, opacity: 70 },
+        { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
     };
   },
