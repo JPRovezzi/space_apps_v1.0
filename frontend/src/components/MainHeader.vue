@@ -1,10 +1,12 @@
 <template>
   <header class="map-header">
-    <router-link :to="backRoute" class="back-button"> ← Volver </router-link>
-    <h1 class="map-title">{{ title }}</h1>
+    <router-link v-if="showBackButton" :to="backRoute" class="back-button">
+      ← Volver
+    </router-link>
+    <h1 v-if="showTitle" class="map-title">{{ title }}</h1>
 
     <!-- Botones del header derecho -->
-    <div class="header-buttons">
+    <div v-if="showHeaderButtons" class="header-buttons">
       <!-- Botón de idioma -->
       <button
         @click="handleLanguageClick"
@@ -26,7 +28,8 @@
 
     <!-- Popups -->
     <div v-show="showLanguagePopup" class="popup language-popup">
-      Cambiar idioma: por el momento el sitio se encuentra solo en español.
+      Cambiar idioma: por el momento el sitio se encuentra solo disponible en
+      español.
     </div>
 
     <div v-show="showConnectionPopup" class="popup connection-popup">
@@ -41,11 +44,23 @@ export default {
   props: {
     title: {
       type: String,
-      required: true,
+      default: "",
     },
     backRoute: {
       type: String,
       default: "/",
+    },
+    showTitle: {
+      type: Boolean,
+      default: true,
+    },
+    showBackButton: {
+      type: Boolean,
+      default: true,
+    },
+    showHeaderButtons: {
+      type: Boolean,
+      default: true,
     },
   },
   data() {
@@ -97,6 +112,7 @@ export default {
   justify-content: center;
   padding: 2rem;
   position: relative;
+  min-height: 60px;
 }
 
 .back-button {
@@ -135,6 +151,8 @@ export default {
   text-align: center;
   letter-spacing: -0.025em;
   line-height: 1.25;
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 768px) {
@@ -162,6 +180,7 @@ export default {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  z-index: 10;
 }
 
 .header-btn {

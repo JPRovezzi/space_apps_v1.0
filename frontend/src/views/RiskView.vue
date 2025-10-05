@@ -1,7 +1,5 @@
 <template>
   <div class="risk-view">
-    <MainHeader title="Mapa de riesgos" back-route="/" />
-
     <!-- Texto informativo ocultable -->
     <div class="info-text-container" :class="{ expanded: showInfoText }">
       <button
@@ -150,7 +148,6 @@
 </template>
 
 <script>
-import MainHeader from "@/components/MainHeader.vue";
 import RiskToolbar from "@/components/RiskToolbar.vue";
 import CordobaContour from "@/components/CordobaContour.vue";
 import RiskLegend from "@/components/RiskLegend.vue";
@@ -160,7 +157,6 @@ import { COLORS } from "@/constants/colors.js";
 export default {
   name: "RiskView",
   components: {
-    MainHeader,
     RiskToolbar,
     CordobaContour,
     RiskLegend,
