@@ -1,7 +1,11 @@
 <template>
   <div class="risk-view">
     <MainHeader title="Mapa de riesgos" back-route="/" />
-    <RiskToolbar @background-change="handleBackgroundChange" />
+    <RiskToolbar
+      @background-change="handleBackgroundChange"
+      @layer-toggle="handleLayerToggle"
+      @layer-opacity-change="handleLayerOpacityChange"
+    />
     <div class="content">
       <div
         class="image-container"
@@ -11,7 +15,19 @@
           ...backgroundStyle,
         }"
       >
-        <!-- Aquí irá la imagen del mapa de riesgos -->
+        <!-- Capas de riesgo (sobre el fondo, debajo del contorno) -->
+        <div
+          v-for="(layer, index) in layers"
+          :key="index"
+          v-show="layer.active"
+          class="layer-overlay"
+          :style="{
+            backgroundImage: `url(/${getLayerImage(layer.name)})`,
+            opacity: layer.opacity / 100,
+          }"
+        ></div>
+
+        <!-- Contorno de Córdoba (siempre arriba) -->
         <CordobaContour
           :width="IMAGE_WIDTH"
           :height="IMAGE_HEIGHT"
@@ -49,6 +65,13 @@ export default {
       currentBackground: "marble", // marble por defecto
       customColor: "#ffffff",
       colors: COLORS,
+      layers: [
+        { name: "Inundaciones", active: false, opacity: 70 },
+        { name: "Deslizamientos", active: false, opacity: 70 },
+        { name: "Urbano", active: false, opacity: 70 },
+        { name: "Agua", active: false, opacity: 70 },
+        { name: "Expansión", active: false, opacity: 70 },
+      ],
     };
   },
   computed: {
@@ -105,6 +128,25 @@ export default {
         this.customColor = background.color;
       }
     },
+
+    handleLayerToggle({ index, layer }) {
+      this.layers[index].active = layer.active;
+    },
+
+    handleLayerOpacityChange({ index, layer }) {
+      this.layers[index].opacity = layer.opacity;
+    },
+
+    getLayerImage(layerName) {
+      const imageMap = {
+        Inundaciones: "flood.jpeg",
+        Deslizamientos: "landslide.jpeg",
+        Urbano: "urban.jpeg",
+        Agua: "water.jpeg",
+        Expansión: "expansion.jpeg",
+      };
+      return imageMap[layerName] || "";
+    },
   },
 };
 </script>
@@ -137,5 +179,18 @@ export default {
   text-align: center;
   position: relative;
   background: rgba(255, 255, 255, 0.02);
+}
+
+.layer-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 1;
 }
 </style>

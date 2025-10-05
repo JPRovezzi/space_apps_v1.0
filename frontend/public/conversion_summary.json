@@ -1,0 +1,32 @@
+{
+  "expansion.csv": {
+    "jpeg_path": "d:\\repos\\space_apps_v1.0\\frontend\\public\\expansion.jpeg",
+    "dimensions": "1297x978",
+    "data_type": "expansion",
+    "color_scheme": "Expansión Urbana"
+  },
+  "flood.csv": {
+    "jpeg_path": "d:\\repos\\space_apps_v1.0\\frontend\\public\\flood.jpeg",
+    "dimensions": "1296x977",
+    "data_type": "flood",
+    "color_scheme": "Inundaciones"
+  },
+  "landslide.csv": {
+    "jpeg_path": "d:\\repos\\space_apps_v1.0\\frontend\\public\\landslide.jpeg",
+    "dimensions": "1296x977",
+    "data_type": "landslide",
+    "color_scheme": "Deslizamientos"
+  },
+  "urban.csv": {
+    "jpeg_path": "d:\\repos\\space_apps_v1.0\\frontend\\public\\urban.jpeg",
+    "dimensions": "1296x977",
+    "data_type": "urban",
+    "color_scheme": "Área Urbana"
+  },
+  "water.csv": {
+    "jpeg_path": "d:\\repos\\space_apps_v1.0\\frontend\\public\\water.jpeg",
+    "dimensions": "1296x977",
+    "data_type": "water",
+    "color_scheme": "Cuerpos de Agua"
+  }
+}

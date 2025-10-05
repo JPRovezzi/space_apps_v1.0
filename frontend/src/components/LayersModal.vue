@@ -27,58 +27,6 @@
                   {{ layer.active ? "⏸️" : "▶️" }}
                 </button>
 
-                <!-- Subir/Bajar orden -->
-                <div class="order-buttons">
-                  <button
-                    class="order-btn"
-                    @click="$emit('layer-move-up', index)"
-                    :disabled="index === 0"
-                    title="Subir orden"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    class="order-btn"
-                    @click="$emit('layer-move-down', index)"
-                    :disabled="index === layers.length - 1"
-                    title="Bajar orden"
-                  >
-                    ↓
-                  </button>
-                </div>
-
-                <!-- Selector de color -->
-                <select
-                  class="color-select"
-                  :value="layer.color || '#0042A6'"
-                  @change="
-                    $emit('layer-color-change', {
-                      index,
-                      color: $event.target.value,
-                    })
-                  "
-                >
-                  <option value="#0042A6">Electric Blue</option>
-                  <option value="#07173F">Deep Blue</option>
-                  <option value="#eafe07">Neon Yellow</option>
-                  <option value="#FFFFFF">White</option>
-                  <option value="#0960E1">Neon Blue</option>
-                  <option value="#2E96F5">Blue Yonder</option>
-                  <option value="#E43700">Rocket RED</option>
-                  <option value="#8E1100">Martian Red</option>
-                  <option value="#FF6B35">Orange</option>
-                  <option value="#00FF88">Green</option>
-                </select>
-
-                <!-- Invertir escala -->
-                <button
-                  class="invert-btn"
-                  @click="$emit('layer-invert-scale', index)"
-                  title="Invertir escala"
-                >
-                  🔄
-                </button>
-
                 <!-- Slider de opacidad -->
                 <div class="opacity-control">
                   <input
@@ -124,16 +72,7 @@ export default {
       default: () => [],
     },
   },
-  emits: [
-    "close",
-    "layer-toggle",
-    "layer-opacity-change",
-    "layer-move-up",
-    "layer-move-down",
-    "layer-color-change",
-    "layer-invert-scale",
-    "accept",
-  ],
+  emits: ["close", "layer-toggle", "layer-opacity-change", "accept"],
 };
 </script>
 
@@ -233,7 +172,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 350px;
+  min-width: 200px;
   flex-wrap: wrap;
 }
 
@@ -294,73 +233,6 @@ export default {
   text-align: right;
 }
 
-.order-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.order-btn {
-  background: none;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  color: #555;
-}
-
-.order-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.1);
-  border-color: rgba(0, 0, 0, 0.3);
-}
-
-.order-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.color-select {
-  padding: 0.2rem 0.4rem;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  font-size: 0.75rem;
-  cursor: pointer;
-  min-width: 100px;
-}
-
-.color-select:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.invert-btn {
-  background: none;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  color: #555;
-}
-
-.invert-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-  border-color: rgba(0, 0, 0, 0.3);
-}
-
 @media (max-width: 768px) {
   .layer-actions {
     gap: 0.5rem;
@@ -371,21 +243,6 @@ export default {
   .opacity-control {
     width: 100%;
     margin-top: 0.5rem;
-  }
-
-  .color-select {
-    min-width: 100px;
-    font-size: 0.75rem;
-  }
-
-  .order-buttons {
-    gap: 0.125rem;
-  }
-
-  .order-btn {
-    width: 20px;
-    height: 20px;
-    font-size: 0.7rem;
   }
 }
 

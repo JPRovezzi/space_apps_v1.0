@@ -66,6 +66,7 @@
       :show="showLayersModal"
       :layers="layers"
       @close="showLayersModal = false"
+      @accept="handleLayersAccept"
       @layer-toggle="handleLayerToggle"
       @layer-opacity-change="handleLayerOpacityChange"
     />
@@ -130,6 +131,11 @@ export default {
         index,
         layer: this.layers[index],
       });
+    },
+
+    handleLayersAccept() {
+      // Cerrar el modal cuando se aceptan los cambios
+      this.showLayersModal = false;
     },
   },
 };
