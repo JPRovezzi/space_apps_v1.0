@@ -2,44 +2,32 @@
   <div class="home">
     <div class="hero">
       <h1 class="title">SpaceApps de la NASA</h1>
-      <p class="subtitle">Análisis de Subíndices Normalizados con Machine Learning</p>
+      <p class="subtitle">
+        Análisis de Subíndices Normalizados con Machine Learning
+      </p>
     </div>
 
-    <div class="features">
-      <div class="feature-card">
-        <h3>🔬 Análisis Científico</h3>
-        <p>Procesamiento avanzado de datos espaciales</p>
+    <div class="visualization-container">
+      <div class="shared-background">
+        <div class="feature-card">
+          <h3>📊 Visualización</h3>
+          <p>Gráficos interactivos de resultados</p>
+        </div>
+        <button class="btn-map">🗺️ Ver Mapa</button>
       </div>
-      <div class="feature-card">
-        <h3>🤖 Machine Learning</h3>
-        <p>Algoritmos de normalización automática</p>
-      </div>
-      <div class="feature-card">
-        <h3>📊 Visualización</h3>
-        <p>Gráficos interactivos de resultados</p>
-      </div>
-    </div>
-
-    <div class="navigation">
-      <router-link to="/analysis" class="btn-primary">
-        🚀 Iniciar Análisis
-      </router-link>
-      <router-link to="/map" class="btn-secondary">
-        🗺️ Ver Mapa
-      </router-link>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'HomeView'
-}
+  name: "HomeView",
+};
 </script>
 
 <style scoped>
 .home {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
   color: white;
   display: flex;
@@ -48,6 +36,7 @@ export default {
   justify-content: center;
   padding: 2rem;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .hero {
@@ -58,7 +47,7 @@ export default {
   font-size: 4rem;
   font-weight: bold;
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: 2px;
 }
 
@@ -80,18 +69,30 @@ export default {
   margin-bottom: 3rem;
 }
 
-.feature-card {
+.shared-background {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 12px;
-  padding: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.feature-card {
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  transition: none;
 }
 
 .feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  transform: none;
+  box-shadow: none;
 }
 
 .feature-card h3 {
@@ -103,6 +104,34 @@ export default {
 .feature-card p {
   opacity: 0.8;
   line-height: 1.5;
+}
+
+.visualization-container {
+  display: flex;
+  justify-content: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+.btn-map {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 50px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.btn-map:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .navigation {
@@ -125,13 +154,13 @@ export default {
   font-size: 1.2rem;
   font-weight: bold;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
   background-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -147,14 +176,14 @@ export default {
   font-size: 1.2rem;
   font-weight: bold;
   border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   cursor: pointer;
 }
 
 .btn-secondary:hover {
   background-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -177,8 +206,15 @@ export default {
     gap: 0.5rem;
   }
 
+  .shared-background {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
   .btn-primary,
-  .btn-secondary {
+  .btn-secondary,
+  .btn-map {
     padding: 12px 24px;
     font-size: 1rem;
   }
