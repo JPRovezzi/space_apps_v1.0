@@ -25,7 +25,11 @@
 
         <div class="sidebar-content">
           <div class="layers-list">
-            <div v-for="layer in layers" :key="layer.id" class="layer-item">
+            <div
+              v-for="layer in layers.filter((l) => !l.hidden)"
+              :key="layer.id"
+              class="layer-item"
+            >
               <label class="layer-checkbox">
                 <input
                   type="checkbox"
@@ -60,6 +64,12 @@ import cordobaGeoJson from "../assets/data/cordoba-province.js";
 import { simulatedFireIncidents } from "../assets/data/simulated-fire-incidents.js";
 import MainHeader from "../components/MainHeader.vue";
 import MapControls from "../components/MapControls.vue";
+import {
+  CORDOBA_BOUNDS,
+  CORDOBA_ZOOM_CONFIG,
+} from "../constants/geographicBounds.js";
+
+// Constantes para límites geográficos (ahora importadas desde constants/geographicBounds.js)
 
 // Fix for default markers in Leaflet with webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -77,8 +87,8 @@ export default {
   },
   data() {
     return {
-      zoom: 9,
-      center: [-32.25, -63.7], // Centro aproximado de la provincia de Córdoba
+      zoom: CORDOBA_ZOOM_CONFIG.DEFAULT_ZOOM,
+      center: CORDOBA_BOUNDS.CENTER, // Centro aproximado de la provincia de Córdoba
       cordobaGeoJson: cordobaGeoJson,
       map: null,
       cordobaLayer: null, // Referencia a la capa de Córdoba
@@ -92,6 +102,7 @@ export default {
           layerRef: null,
           icon: "🏛️",
           description: "Límites provinciales",
+          hidden: false,
         },
         {
           id: "cordoba-capital",
@@ -100,6 +111,7 @@ export default {
           layerRef: null,
           icon: "🏙️",
           description: "Ciudad capital",
+          hidden: true,
         },
         {
           id: "influence-zone",
@@ -108,6 +120,7 @@ export default {
           layerRef: null,
           icon: "🎯",
           description: "Área de 30km de radio",
+          hidden: true,
         },
         {
           id: "sub-region",
@@ -116,6 +129,7 @@ export default {
           layerRef: null,
           icon: "🔷",
           description: "Polígono adicional",
+          hidden: true,
         },
         {
           id: "route-line",
@@ -124,6 +138,7 @@ export default {
           layerRef: null,
           icon: "🛣️",
           description: "Línea trazada",
+          hidden: true,
         },
         {
           id: "simulated-fire",
@@ -132,6 +147,7 @@ export default {
           layerRef: null,
           icon: "🔥",
           description: "Puntos de incendios detectados",
+          hidden: false,
         },
         {
           id: "cordoba-fire-nasa",
@@ -140,6 +156,16 @@ export default {
           layerRef: null,
           icon: "🚀",
           description: "Datos reales de FIRMS",
+          hidden: true,
+        },
+        {
+          id: "modis-data",
+          name: "MODIS",
+          visible: true,
+          layerRef: null,
+          icon: "🛰️",
+          description: "Datos MODIS Córdoba",
+          hidden: false,
         },
       ],
       zoomLocked: false, // Por defecto zoom bloqueado en Córdoba
@@ -173,7 +199,7 @@ export default {
     }
   },
   methods: {
-    initMap() {
+    async initMap() {
       // Crear el mapa
       const mapContainer = this.$refs.mapContainer;
       if (mapContainer) {
@@ -258,7 +284,7 @@ export default {
         });
 
         // Crear elementos del mapa y almacenar referencias
-        this.createMapElements();
+        await this.createMapElements();
 
         // Aplicar restricciones de zoom iniciales
         this.updateMapBounds();
@@ -297,7 +323,9 @@ export default {
       if (this.map && this.cordobaGeoJson) {
         this.map.fitBounds(this.cordobaLayer.getBounds(), {
           padding: [20, 20],
-          maxZoom: this.zoomLocked ? 12 : 18,
+          maxZoom: this.zoomLocked
+            ? CORDOBA_ZOOM_CONFIG.MAX_ZOOM_LOCKED
+            : CORDOBA_ZOOM_CONFIG.MAX_ZOOM,
         });
       }
     },
@@ -306,18 +334,14 @@ export default {
 
       if (this.zoomLocked) {
         // Aplicar restricciones de Córdoba
-        const cordobaBounds = [
-          [-29.5, -66.0], // Noroeste
-          [-35.0, -62.0], // Sureste
-        ];
-        this.map.setMaxBounds(cordobaBounds);
-        this.map.setMaxZoom(12);
-        this.map.setMinZoom(8);
+        this.map.setMaxBounds(CORDOBA_BOUNDS.getLeafletBounds());
+        this.map.setMaxZoom(CORDOBA_ZOOM_CONFIG.MAX_ZOOM_LOCKED);
+        this.map.setMinZoom(CORDOBA_ZOOM_CONFIG.MIN_ZOOM);
         this.map.options.maxBoundsViscosity = 1.0;
       } else {
         // Quitar restricciones - zoom libre
         this.map.setMaxBounds(null);
-        this.map.setMaxZoom(18);
+        this.map.setMaxZoom(CORDOBA_ZOOM_CONFIG.MAX_ZOOM);
         this.map.setMinZoom(1);
         this.map.options.maxBoundsViscosity = 0.0;
       }
@@ -337,14 +361,17 @@ export default {
         return "Desconocido";
       }
     },
-    createMapElements() {
+    async createMapElements() {
       // 1. Marcador de Córdoba Capital
-      const capitalMarker = L.marker([-31.4167, -64.1833])
-        .addTo(this.map)
-        .bindPopup("Córdoba Capital<br><b>Población: ~1.5M</b>")
-        .openPopup();
+      const capitalMarker = L.marker([-31.4167, -64.1833]).bindPopup(
+        "Córdoba Capital<br><b>Población: ~1.5M</b>"
+      );
 
+      // Solo agregar al mapa si la capa es visible y no está oculta
       const capitalLayer = this.layers.find((l) => l.id === "cordoba-capital");
+      if (capitalLayer && capitalLayer.visible && !capitalLayer.hidden) {
+        capitalMarker.addTo(this.map).openPopup();
+      }
       if (capitalLayer) {
         capitalLayer.layerRef = capitalMarker;
       }
@@ -355,11 +382,13 @@ export default {
         fillColor: "#f03",
         fillOpacity: 0.3,
         radius: 30000, // 30km de radio
-      })
-        .addTo(this.map)
-        .bindPopup("Zona de ejemplo");
+      }).bindPopup("Zona de ejemplo");
 
+      // Solo agregar al mapa si la capa es visible y no está oculta
       const influenceLayer = this.layers.find((l) => l.id === "influence-zone");
+      if (influenceLayer && influenceLayer.visible && !influenceLayer.hidden) {
+        influenceCircle.addTo(this.map);
+      }
       if (influenceLayer) {
         influenceLayer.layerRef = influenceCircle;
       }
@@ -377,9 +406,13 @@ export default {
           fillColor: "blue",
           fillOpacity: 0.2,
         }
-      ).addTo(this.map);
+      );
 
+      // Solo agregar al mapa si la capa es visible y no está oculta
       const subRegionLayer = this.layers.find((l) => l.id === "sub-region");
+      if (subRegionLayer && subRegionLayer.visible && !subRegionLayer.hidden) {
+        subRegionPolygon.addTo(this.map);
+      }
       if (subRegionLayer) {
         subRegionLayer.layerRef = subRegionPolygon;
       }
@@ -396,9 +429,13 @@ export default {
           weight: 3,
           opacity: 0.7,
         }
-      ).addTo(this.map);
+      );
 
+      // Solo agregar al mapa si la capa es visible y no está oculta
       const routeLayer = this.layers.find((l) => l.id === "route-line");
+      if (routeLayer && routeLayer.visible && !routeLayer.hidden) {
+        routeLine.addTo(this.map);
+      }
       if (routeLayer) {
         routeLayer.layerRef = routeLine;
       }
@@ -408,6 +445,9 @@ export default {
 
       // 6. Crear capa de incendios reales de Córdoba (filtrados por fecha)
       this.createRealFireIncidentsLayer();
+
+      // 7. Crear capa de datos MODIS para Córdoba
+      await this.createModisLayer();
     },
     addCoordinatesControl() {
       // Crear control personalizado para coordenadas
@@ -519,8 +559,8 @@ export default {
       // Crear nueva capa
       const fireLayerGroup = L.layerGroup(fireMarkers);
 
-      // Solo añadir al mapa si la capa está visible
-      if (simulatedLayer && simulatedLayer.visible) {
+      // Solo añadir al mapa si la capa está visible y no está oculta
+      if (simulatedLayer && simulatedLayer.visible && !simulatedLayer.hidden) {
         fireLayerGroup.addTo(this.map);
       }
 
@@ -575,8 +615,8 @@ export default {
         // Crear nueva capa
         const fireLayerGroup = L.layerGroup(fireMarkers);
 
-        // Solo añadir al mapa si la capa está visible
-        if (nasaLayer && nasaLayer.visible) {
+        // Solo añadir al mapa si la capa está visible y no está oculta
+        if (nasaLayer && nasaLayer.visible && !nasaLayer.hidden) {
           fireLayerGroup.addTo(this.map);
         }
 
@@ -591,6 +631,100 @@ export default {
       } catch (error) {
         console.error("Error cargando incendios reales de NASA:", error);
         // Si falla, la capa queda vacía (sin mostrar error al usuario)
+      }
+    },
+    async createModisLayer() {
+      try {
+        // Cargar el archivo CSV de datos MODIS
+        const response = await fetch(
+          "./MODIS_C6_1_Global_MCD14DL_NRT_2025277.txt"
+        );
+        const csvText = await response.text();
+
+        // Parsear el CSV
+        const lines = csvText.trim().split("\n");
+        const headers = lines[0].split(",");
+
+        const modisPoints = [];
+
+        // Procesar cada línea del CSV (saltando el header)
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(",");
+          const point = {};
+
+          // Crear objeto con los datos del punto
+          headers.forEach((header, index) => {
+            if (
+              header === "latitude" ||
+              header === "longitude" ||
+              header === "brightness" ||
+              header === "confidence"
+            ) {
+              point[header] = parseFloat(values[index]);
+            } else {
+              point[header] = values[index];
+            }
+          });
+
+          // Filtrar solo puntos dentro de los límites de Córdoba
+          if (CORDOBA_BOUNDS.contains(point.latitude, point.longitude)) {
+            modisPoints.push(point);
+          }
+        }
+
+        const modisMarkers = [];
+
+        modisPoints.forEach((point) => {
+          // Crear círculo rojo para cada punto MODIS
+          const modisCircle = L.circle([point.latitude, point.longitude], {
+            color: "red",
+            fillColor: "#ff0000",
+            fillOpacity: 0.8,
+            radius: 500, // Radio fijo de 500 metros
+            weight: 2,
+          }).bindPopup(`
+            <div style="font-family: Arial, sans-serif; font-size: 12px;">
+              <strong>🛰️ Punto MODIS</strong><br>
+              <strong>Fecha:</strong> ${point.acq_date}<br>
+              <strong>Hora:</strong> ${point.acq_time}<br>
+              <strong>Brillo:</strong> ${point.brightness} K<br>
+              <strong>Confianza:</strong> ${point.confidence}%<br>
+              <strong>Satélite:</strong> ${point.satellite}<br>
+              <strong>Modo:</strong> ${
+                point.daynight === "D" ? "Diurno" : "Nocturno"
+              }<br>
+              <strong>FRP:</strong> ${point.frp} MW<br>
+              <strong>Coordenadas:</strong> ${point.latitude.toFixed(
+                4
+              )}, ${point.longitude.toFixed(4)}
+            </div>
+          `);
+
+          modisMarkers.push(modisCircle);
+        });
+
+        // Remover capa anterior si existe
+        const modisLayer = this.layers.find((l) => l.id === "modis-data");
+        if (modisLayer && modisLayer.layerRef) {
+          this.map.removeLayer(modisLayer.layerRef);
+        }
+
+        // Crear nueva capa
+        const modisLayerGroup = L.layerGroup(modisMarkers);
+
+        // Solo añadir al mapa si la capa está visible y no está oculta
+        if (modisLayer && modisLayer.visible && !modisLayer.hidden) {
+          modisLayerGroup.addTo(this.map);
+        }
+
+        // Actualizar referencia
+        if (modisLayer) {
+          modisLayer.layerRef = modisLayerGroup;
+        }
+
+        console.log(`Cargados ${modisPoints.length} puntos MODIS para Córdoba`);
+      } catch (error) {
+        console.error("Error cargando datos MODIS:", error);
       }
     },
   },
