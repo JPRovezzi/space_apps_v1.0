@@ -26,11 +26,31 @@ export default {
       type: Object,
       required: true,
     },
+    background: {
+      type: String,
+      default: "marble",
+    },
   },
   data() {
     return {
       svg: null,
     };
+  },
+  computed: {
+    strokeColor() {
+      return this.background === "night" ? "#0960e1" : "#000000";
+    },
+  },
+  watch: {
+    background: {
+      handler() {
+        // Actualizar el color de los paths existentes cuando cambia el background
+        if (this.svg) {
+          this.svg.selectAll("path").attr("stroke", this.strokeColor);
+        }
+      },
+      immediate: false,
+    },
   },
   mounted() {
     this.initializeSvg();
@@ -83,7 +103,7 @@ export default {
                 .datum(pixelCoordinates)
                 .attr("d", lineGenerator)
                 .attr("fill", "none")
-                .attr("stroke", "#0960e1")
+                .attr("stroke", this.strokeColor)
                 .attr("stroke-width", "2")
                 .attr("stroke-opacity", "0.9")
                 .attr("vector-effect", "non-scaling-stroke");

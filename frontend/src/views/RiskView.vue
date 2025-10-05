@@ -21,6 +21,7 @@
             MAX_LON: MAX_LON,
             MIN_LON: MIN_LON,
           }"
+          :background="currentBackground"
         />
       </div>
     </div>
