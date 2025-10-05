@@ -68,6 +68,7 @@ import {
   CORDOBA_BOUNDS,
   CORDOBA_ZOOM_CONFIG,
 } from "../constants/geographicBounds.js";
+import { COLORS } from "../constants/colors.js";
 
 // Constantes para límites geográficos (ahora importadas desde constants/geographicBounds.js)
 
@@ -168,6 +169,7 @@ export default {
           hidden: false,
         },
       ],
+      colors: COLORS, // Colores oficiales NASA Space Apps
       zoomLocked: false, // Por defecto zoom bloqueado en Córdoba
       dateRange: {
         start: "2024-01-15",
@@ -744,8 +746,10 @@ export default {
 <style>
 .map-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
-  color: white;
+  background: linear-gradient(45deg, #0042a6 0%, #07173f 100%); /* Fallback */
+  background: var(--gradient-background);
+  color: #ffffff; /* Fallback */
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
 }
@@ -879,7 +883,7 @@ export default {
 .checkmark {
   width: 20px;
   height: 20px;
-  border: 2px solid #0369a1;
+  border: 2px solid var(--electric-blue);
   border-radius: 4px;
   display: inline-block;
   position: relative;
@@ -887,8 +891,8 @@ export default {
 }
 
 .layer-checkbox input:checked + .checkmark {
-  background: #0369a1;
-  border-color: #0369a1;
+  background: var(--electric-blue);
+  border-color: var(--electric-blue);
 }
 
 .layer-checkbox input:checked + .checkmark::after {
@@ -1005,8 +1009,8 @@ export default {
 }
 
 .leaflet-control-scale-line {
-  border-color: #0369a1 !important;
-  background: rgba(3, 105, 161, 0.1) !important;
+  border-color: var(--electric-blue) !important;
+  background: rgba(0, 66, 166, 0.1) !important;
 }
 
 /* Positioning adjustments for controls */

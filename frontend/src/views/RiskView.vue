@@ -33,6 +33,7 @@ import MainHeader from "@/components/MainHeader.vue";
 import RiskToolbar from "@/components/RiskToolbar.vue";
 import CordobaContour from "@/components/CordobaContour.vue";
 import { CORDOBA_BOUNDS } from "@/constants/geographicBounds.js";
+import { COLORS } from "@/constants/colors.js";
 
 export default {
   name: "RiskView",
@@ -47,6 +48,7 @@ export default {
       IMAGE_HEIGHT: 1296,
       currentBackground: "marble", // marble por defecto
       customColor: "#ffffff",
+      colors: COLORS,
     };
   },
   computed: {
@@ -84,10 +86,9 @@ export default {
           backgroundColor: this.customColor,
         };
       } else {
-        // Fallback al gradiente azul
+        // Fallback al gradiente oficial NASA Space Apps
         return {
-          background:
-            "linear-gradient(135deg, #0960e1 0%, #4a90e2 50%, #7bb3ff 100%)",
+          background: this.colors.gradientBackground,
         };
       }
     },
@@ -111,8 +112,10 @@ export default {
 <style scoped>
 .risk-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0960e1 0%, #4a90e2 50%, #7bb3ff 100%);
-  color: white;
+  background: linear-gradient(45deg, #0042a6 0%, #07173f 100%); /* Fallback */
+  background: var(--gradient-background);
+  color: #ffffff; /* Fallback */
+  color: var(--text-primary);
 }
 
 .content {

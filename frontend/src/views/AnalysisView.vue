@@ -93,6 +93,7 @@
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 import MainHeader from "../components/MainHeader.vue";
+import { COLORS } from "../constants/colors.js";
 
 export default {
   name: "AnalysisView",
@@ -101,6 +102,7 @@ export default {
   },
   data() {
     return {
+      colors: COLORS, // Colores oficiales NASA Space Apps
       formData: {
         data: "",
         normalizationType: "minmax",
@@ -175,8 +177,10 @@ export default {
 <style scoped>
 .analysis-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
-  color: white;
+  background: linear-gradient(45deg, #0042a6 0%, #07173f 100%); /* Fallback */
+  background: var(--gradient-background);
+  color: #ffffff; /* Fallback */
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
 }
@@ -294,8 +298,8 @@ select:disabled {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
+  background: var(--gradient-accent);
+  color: var(--text-primary);
   box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
 }
 
