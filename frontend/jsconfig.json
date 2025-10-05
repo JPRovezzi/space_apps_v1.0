@@ -15,5 +15,10 @@
       "dom.iterable",
       "scripthost"
     ]
-  }
+  },
+  "exclude": [
+    "src/views/AnalysisView.vue",
+    "src/views/MapView.vue",
+    "src/views/ResultsView.vue"
+  ]
 }
