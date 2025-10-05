@@ -74,6 +74,15 @@
       >
         <span class="icon">{{ showMapControls ? "🧭" : "🚫" }}</span>
       </button>
+
+      <!-- Descargar snapshot -->
+      <button
+        class="toolbar-btn"
+        @click="downloadSnapshot"
+        title="Descargar captura del mapa"
+      >
+        <span class="icon">📥</span>
+      </button>
     </div>
 
     <!-- Modal de selección de colores -->
@@ -208,6 +217,10 @@ export default {
     toggleMapControls() {
       this.showMapControls = !this.showMapControls;
       this.$emit("map-controls-toggle", this.showMapControls);
+    },
+
+    downloadSnapshot() {
+      this.$emit("download-snapshot");
     },
   },
 };
