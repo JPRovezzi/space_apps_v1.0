@@ -15,7 +15,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(layer, index) in layers" :key="index">
+            <tr v-for="layer in layers" :key="layer.id">
               <td class="layer-name">
                 <span
                   class="layer-name-link"
@@ -28,7 +28,7 @@
                 <!-- Botón Play/Pause -->
                 <button
                   class="play-pause-btn"
-                  @click="$emit('layer-toggle', index)"
+                  @click="$emit('layer-toggle', layer.id)"
                   :title="layer.active ? 'Desactivar capa' : 'Activar capa'"
                 >
                   {{ layer.active ? "⏸️" : "▶️" }}
@@ -43,7 +43,7 @@
                     :value="layer.opacity"
                     @input="
                       $emit('layer-opacity-change', {
-                        index,
+                        layerId: layer.id,
                         opacity: parseInt($event.target.value),
                       })
                     "
