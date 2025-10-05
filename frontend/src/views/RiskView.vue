@@ -20,6 +20,7 @@
 <script>
 import MainHeader from "@/components/MainHeader.vue";
 import RiskToolbar from "@/components/RiskToolbar.vue";
+import { CORDOBA_BOUNDS } from "@/constants/geographicBounds.js";
 
 export default {
   name: "RiskView",
@@ -36,6 +37,20 @@ export default {
     };
   },
   computed: {
+    // Constantes geográficas para cálculos futuros
+    MAX_LAT() {
+      return CORDOBA_BOUNDS.MAX_LAT;
+    },
+    MIN_LAT() {
+      return CORDOBA_BOUNDS.MIN_LAT;
+    },
+    MAX_LON() {
+      return CORDOBA_BOUNDS.MAX_LON;
+    },
+    MIN_LON() {
+      return CORDOBA_BOUNDS.MIN_LON;
+    },
+
     backgroundStyle() {
       if (this.currentBackground === "marble") {
         return {
