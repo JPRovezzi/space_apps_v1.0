@@ -116,13 +116,21 @@ export default {
 }
 
 .header h2 {
+  font-family: var(--font-heading);
+  font-weight: 900; /* Fira Sans Black */
   color: #2c3e50;
   margin-bottom: 0.5rem;
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
 }
 
 .header p {
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
   color: #7f8c8d;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  line-height: 1.5;
 }
 
 .no-results {
@@ -144,9 +152,12 @@ export default {
 
 .summary-card h3,
 .data-section h3 {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   color: #2c3e50;
   margin-bottom: 1.5rem;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
 }
 
 .stats {
@@ -166,12 +177,16 @@ export default {
 }
 
 .label {
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-weight: 700; /* Overpass Bold */
   color: #2c3e50;
+  letter-spacing: 0.025em;
 }
 
 .value {
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
+  color: #495057;
 }
 
 .status-success {
@@ -240,12 +255,13 @@ export default {
 
 .btn-primary,
 .btn-secondary {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
-  font-weight: 600;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -253,6 +269,7 @@ export default {
   transition: all 0.3s ease;
   min-width: 140px;
   justify-content: center;
+  letter-spacing: 0.025em;
 }
 
 .btn-primary {

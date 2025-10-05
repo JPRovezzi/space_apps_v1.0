@@ -58,11 +58,14 @@ export default {
 }
 
 .map-title {
+  font-family: var(--font-heading);
   font-size: 2.5rem;
-  font-weight: bold;
+  font-weight: 900; /* Fira Sans Black */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   margin: 0;
   text-align: center;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
 }
 
 @media (max-width: 768px) {

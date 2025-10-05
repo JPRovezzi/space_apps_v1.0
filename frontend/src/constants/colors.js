@@ -106,4 +106,58 @@ export const THEME = {
   },
 };
 
+// Fuentes oficiales NASA Space Apps
+export const FONTS = {
+  // Familias principales
+  family: {
+    heading: "'Fira Sans', sans-serif",
+    body: "'Overpass', sans-serif",
+    code: "'Fira Code', monospace",
+  },
+
+  // Pesos específicos
+  weight: {
+    black: 900, // Fira Sans Black
+    bold: 700, // Fira Sans Bold, Overpass Bold
+    regular: 400, // Overpass Regular, Fira Code Regular
+    italic: "italic", // Overpass Italic
+  },
+
+  // Jerarquía tipográfica
+  size: {
+    // Títulos principales
+    title: "4rem", // Títulos de página
+    h1: "3rem", // Encabezados principales
+    h2: "2.5rem", // Encabezados secundarios
+    h3: "2rem", // Encabezados terciarios
+    h4: "1.5rem", // Encabezados cuaternarios
+    h5: "1.25rem", // Encabezados quintos
+    h6: "1rem", // Encabezados sextos
+
+    // Texto body
+    xl: "1.25rem", // Texto grande
+    lg: "1.125rem", // Texto mediano-grande
+    md: "1rem", // Texto normal (base)
+    sm: "0.875rem", // Texto pequeño
+    xs: "0.75rem", // Texto muy pequeño
+
+    // Código
+    code: "0.9rem", // Tamaño código estándar
+  },
+
+  // Altura de línea
+  lineHeight: {
+    tight: 1.25, // Para títulos compactos
+    normal: 1.5, // Para texto body estándar
+    relaxed: 1.75, // Para mejor legibilidad
+  },
+
+  // Espaciado de letras
+  letterSpacing: {
+    tight: "-0.025em", // Para títulos
+    normal: "0", // Estándar
+    wide: "0.025em", // Para énfasis
+  },
+};
+
 export default COLORS;

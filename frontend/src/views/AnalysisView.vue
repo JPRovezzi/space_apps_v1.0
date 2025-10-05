@@ -228,9 +228,12 @@ export default {
 }
 
 .form-section h3 {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   color: #2c3e50;
   margin-bottom: 1.5rem;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
 }
 
 .form-group {
@@ -238,15 +241,21 @@ export default {
 }
 
 label {
+  font-family: var(--font-body);
+  font-weight: 700; /* Overpass Bold */
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 600;
   color: #2c3e50;
+  font-size: 1rem;
+  letter-spacing: 0.025em;
 }
 
 .help-text {
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
   color: #7f8c8d;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
   margin-top: 0.25rem;
   display: block;
 }
@@ -283,18 +292,20 @@ select:disabled {
 
 .btn-primary,
 .btn-secondary {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
-  font-weight: 600;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   min-width: 140px;
   justify-content: center;
+  letter-spacing: 0.025em;
 }
 
 .btn-primary {

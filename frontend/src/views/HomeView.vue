@@ -1,9 +1,9 @@
 <template>
   <div class="home">
     <div class="hero">
-      <h1 class="title">SpaceApps de la NASA</h1>
+      <h1 class="title">Cometa-3</h1>
       <p class="subtitle">
-        Análisis de Subíndices Normalizados con Machine Learning
+        Análisis de riesgo para ciudades del hoy y del mañana
       </p>
     </div>
 
@@ -53,20 +53,25 @@ export default {
 }
 
 .title {
+  font-family: var(--font-heading);
   font-size: 4rem;
-  font-weight: bold;
+  font-weight: 900; /* Fira Sans Black */
   margin-bottom: 1rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  letter-spacing: 2px;
+  letter-spacing: -0.025em; /* Espaciado ajustado para títulos */
+  line-height: 1.25;
 }
 
 .subtitle {
-  font-size: 1.5rem;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 400; /* Overpass Regular */
   opacity: 0.9;
   margin-bottom: 2rem;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  line-height: 1.5;
 }
 
 .features {
@@ -105,9 +110,11 @@ export default {
 }
 
 .feature-card h3 {
-  font-size: 1.3rem;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 700; /* Fira Sans Bold */
+  letter-spacing: -0.025em;
 }
 
 .feature-card p {
@@ -123,6 +130,8 @@ export default {
 }
 
 .btn-map {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   color: white;
@@ -132,9 +141,9 @@ export default {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.125rem;
   text-decoration: none;
+  letter-spacing: 0.025em;
 }
 
 .btn-map:hover {
@@ -153,6 +162,8 @@ export default {
 }
 
 .btn-primary {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   background-color: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
   color: white;
@@ -161,10 +172,10 @@ export default {
   border-radius: 50px;
   display: inline-block;
   transition: all 0.3s ease;
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.125rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.025em;
 }
 
 .btn-primary:hover {
@@ -175,6 +186,8 @@ export default {
 }
 
 .btn-secondary {
+  font-family: var(--font-body);
+  font-weight: 700; /* Overpass Bold */
   background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   color: white;
@@ -183,11 +196,11 @@ export default {
   border-radius: 50px;
   display: inline-block;
   transition: all 0.3s ease;
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.125rem;
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  letter-spacing: 0.025em;
 }
 
 .btn-secondary:hover {

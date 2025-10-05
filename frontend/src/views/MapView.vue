@@ -826,9 +826,11 @@ export default {
 }
 
 .sidebar-title {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
 }
 
 .sidebar-toggle {
@@ -923,13 +925,17 @@ export default {
 }
 
 .layer-name {
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-weight: 700; /* Overpass Bold */
   color: #1f2937;
   margin-bottom: 0.25rem;
+  letter-spacing: 0.025em;
 }
 
 .layer-description {
-  font-size: 0.85rem;
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
+  font-size: 0.875rem;
   color: #6b7280;
 }
 
