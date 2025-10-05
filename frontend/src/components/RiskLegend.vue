@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="risk-legend">
     <div class="legend-header">
-      <h4>Riesgo de Desastres</h4>
+      <h4>Índice de Riesgo</h4>
     </div>
     <div class="legend-content">
       <div

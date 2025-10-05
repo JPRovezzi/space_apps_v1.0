@@ -1,9 +1,9 @@
 <template>
   <div class="home">
     <div class="hero">
-      <h1 class="title">Cometa-3</h1>
+      <h1 class="title">Astrochingolo</h1>
       <p class="subtitle">
-        Análisis de riesgo para ciudades del hoy y del mañana
+        Análisis de riesgos para ciudades del hoy y del mañana
       </p>
     </div>
 

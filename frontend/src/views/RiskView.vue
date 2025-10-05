@@ -15,6 +15,9 @@
           height: IMAGE_HEIGHT + 'px',
           ...backgroundStyle,
         }"
+        @mousemove="handleMouseMove"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
       >
         <!-- Capas de riesgo (sobre el fondo, debajo del contorno) -->
         <div
@@ -43,6 +46,12 @@
 
         <!-- Leyenda de riesgo (por encima del contorno) -->
         <RiskLegend :show="showRiskLegend" />
+
+        <!-- Indicador de coordenadas -->
+        <div v-if="showCoordinates" class="coordinates-indicator">
+          {{ mouseCoordinates.lat.toFixed(6) }},
+          {{ mouseCoordinates.lon.toFixed(6) }}
+        </div>
       </div>
     </div>
   </div>
@@ -72,6 +81,8 @@ export default {
       customColor: "#ffffff",
       colors: COLORS,
       showLegend: false, // Controla la visibilidad de la leyenda
+      showCoordinates: false, // Controla la visibilidad de las coordenadas
+      mouseCoordinates: { lat: 0, lon: 0 }, // Coordenadas actuales del mouse
       layers: [
         { name: "Inundaciones", active: false, opacity: 70 },
         { name: "Deslizamientos", active: false, opacity: 70 },
@@ -79,6 +90,7 @@ export default {
         { name: "Agua", active: false, opacity: 70 },
         { name: "Expansión", active: false, opacity: 70 },
         { name: "Riesgo", active: false, opacity: 70 },
+        { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
     };
   },
@@ -162,8 +174,44 @@ export default {
         Agua: "water.jpeg",
         Expansión: "expansion.jpeg",
         Riesgo: "riesgo.jpeg",
+        "Áreas protegidas": "areas_protegidas_monocromatico.jpg",
       };
       return imageMap[layerName] || "";
+    },
+
+    calculateCoordinates(mouseX, mouseY) {
+      // Convertir posición del mouse a coordenadas geográficas
+      const latRange = this.MAX_LAT - this.MIN_LAT;
+      const lonRange = this.MAX_LON - this.MIN_LON;
+
+      const lat = this.MAX_LAT - (mouseY / this.IMAGE_HEIGHT) * latRange;
+      const lon = this.MIN_LON + (mouseX / this.IMAGE_WIDTH) * lonRange;
+
+      return { lat, lon };
+    },
+
+    handleMouseMove(event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // Solo calcular si el mouse está dentro del contenedor
+      if (
+        mouseX >= 0 &&
+        mouseX <= this.IMAGE_WIDTH &&
+        mouseY >= 0 &&
+        mouseY <= this.IMAGE_HEIGHT
+      ) {
+        this.mouseCoordinates = this.calculateCoordinates(mouseX, mouseY);
+      }
+    },
+
+    handleMouseEnter() {
+      this.showCoordinates = true;
+    },
+
+    handleMouseLeave() {
+      this.showCoordinates = false;
     },
   },
 };
@@ -230,6 +278,35 @@ export default {
     top: 5px;
     left: 5px;
     max-width: calc(100vw - 20px);
+  }
+}
+
+/* Coordinates indicator */
+.coordinates-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #eafe07;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.9rem;
+  font-weight: 500;
+  z-index: 1000;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(234, 254, 7, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.2s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .coordinates-indicator {
+    top: 5px;
+    right: 5px;
+    font-size: 0.8rem;
+    padding: 6px 8px;
   }
 }
 </style>
