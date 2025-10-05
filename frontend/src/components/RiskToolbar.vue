@@ -1,28 +1,49 @@
 <template>
   <div class="risk-toolbar">
-    <!-- Toggle sol/luna -->
-    <button
-      class="toolbar-btn"
-      @click="toggleBackground"
-      :title="
-        currentBackground === 'marble'
-          ? 'Cambiar a modo nocturno'
-          : 'Cambiar a modo diurno'
-      "
-    >
-      <span class="icon">{{
-        currentBackground === "marble" ? "☀️" : "🌙"
-      }}</span>
-    </button>
+    <div class="toolbar-container">
+      <!-- Toggle sol/luna -->
+      <button
+        class="toolbar-btn"
+        @click="toggleBackground"
+        :title="
+          currentBackground === 'marble'
+            ? 'Cambiar a modo nocturno'
+            : 'Cambiar a modo diurno'
+        "
+      >
+        <span class="icon">{{
+          currentBackground === "marble" ? "☀️" : "🌙"
+        }}</span>
+      </button>
 
-    <!-- Selector de colores -->
-    <button
-      class="toolbar-btn"
-      @click="showColorPicker = true"
-      title="Seleccionar color de fondo"
-    >
-      <span class="icon">🎨</span>
-    </button>
+      <!-- Selector de colores -->
+      <button
+        class="toolbar-btn"
+        @click="showColorPicker = true"
+        title="Seleccionar color de fondo"
+      >
+        <span class="icon">🎨</span>
+      </button>
+
+      <!-- Zoom In -->
+      <button class="toolbar-btn" title="Acercar">
+        <span class="icon">🔍+</span>
+      </button>
+
+      <!-- Zoom Out -->
+      <button class="toolbar-btn" title="Alejar">
+        <span class="icon">🔍-</span>
+      </button>
+
+      <!-- Capas -->
+      <button
+        class="toolbar-btn"
+        @click="showLayersModal = true"
+        title="Gestionar capas"
+      >
+        <span class="icon">📚</span>
+      </button>
+    </div>
 
     <!-- Modal de selección de colores -->
     <div
@@ -116,6 +137,61 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de gestión de capas -->
+    <div
+      v-if="showLayersModal"
+      class="color-modal-overlay"
+      @click="showLayersModal = false"
+    >
+      <div class="color-modal layers-modal" @click.stop>
+        <div class="color-modal-header">
+          <h3>Gestión de Capas</h3>
+          <button class="close-btn" @click="showLayersModal = false">
+            &times;
+          </button>
+        </div>
+
+        <div class="layers-modal-body">
+          <table class="layers-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(layer, index) in layers" :key="index">
+                <td class="layer-name">{{ layer.name }}</td>
+                <td class="layer-actions">
+                  <!-- Botón Play/Pause -->
+                  <button
+                    class="play-pause-btn"
+                    @click="toggleLayer(index)"
+                    :title="layer.active ? 'Desactivar capa' : 'Activar capa'"
+                  >
+                    {{ layer.active ? "⏸️" : "▶️" }}
+                  </button>
+
+                  <!-- Slider de opacidad -->
+                  <div class="opacity-control">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      v-model.number="layer.opacity"
+                      @input="updateLayerOpacity(index)"
+                      class="opacity-slider"
+                    />
+                    <span class="opacity-value">{{ layer.opacity }}%</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -126,6 +202,7 @@ export default {
     return {
       currentBackground: "marble", // marble por defecto
       showColorPicker: false,
+      showLayersModal: false,
       selectedColor: "#ffffff",
       rgb: { r: 255, g: 255, b: 255 },
       hexColor: "#ffffff",
@@ -134,6 +211,13 @@ export default {
       isPicking: false,
       canvas: null,
       ctx: null,
+      layers: [
+        { name: "Inundaciones", active: false, opacity: 70 },
+        { name: "Deslizamientos", active: false, opacity: 70 },
+        { name: "Urbano", active: false, opacity: 70 },
+        { name: "Agua", active: false, opacity: 70 },
+        { name: "Expansión", active: false, opacity: 70 },
+      ],
     };
   },
   mounted() {
@@ -284,6 +368,23 @@ export default {
       });
       this.showColorPicker = false;
     },
+
+    toggleLayer(index) {
+      this.layers[index].active = !this.layers[index].active;
+      // Aquí se emitirá un evento cuando se implemente la funcionalidad
+      this.$emit("layer-toggle", {
+        index,
+        layer: this.layers[index],
+      });
+    },
+
+    updateLayerOpacity(index) {
+      // Aquí se emitirá un evento cuando se implemente la funcionalidad
+      this.$emit("layer-opacity-change", {
+        index,
+        layer: this.layers[index],
+      });
+    },
   },
 };
 </script>
@@ -291,16 +392,24 @@ export default {
 <style scoped>
 .risk-toolbar {
   display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.toolbar-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
   gap: 1rem;
   padding: 1rem;
-  justify-content: center;
-  align-items: center;
 }
 
 .toolbar-btn {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  border: none;
   border-radius: 50px;
   padding: 12px 16px;
   color: white;
@@ -498,6 +607,129 @@ export default {
 
 .btn-secondary:hover {
   background: #545b62;
+}
+
+.toolbar-container {
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.toolbar-btn {
+  padding: 10px 14px;
+  font-size: 1rem;
+}
+
+.layer-actions {
+  gap: 0.75rem;
+  min-width: auto;
+}
+
+.opacity-control {
+  width: 100%;
+}
+
+.layers-modal {
+  max-width: 600px;
+}
+
+.layers-modal-body {
+  padding: 1.5rem;
+}
+
+.layers-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.layers-table th,
+.layers-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.layers-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: bold;
+  color: #333;
+}
+
+.layer-name {
+  font-weight: 500;
+  color: #555;
+}
+
+.layer-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 250px;
+}
+
+@media (min-width: 769px) {
+  .layer-actions {
+    flex-direction: row;
+  }
+}
+
+.play-pause-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.play-pause-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.opacity-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.opacity-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  border: none;
+}
+
+.opacity-value {
+  min-width: 45px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+  text-align: right;
 }
 
 @media (max-width: 768px) {
