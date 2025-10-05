@@ -5,6 +5,7 @@
       @background-change="handleBackgroundChange"
       @layer-toggle="handleLayerToggle"
       @layer-opacity-change="handleLayerOpacityChange"
+      @legend-toggle="handleLegendToggle"
     />
     <div class="content">
       <div
@@ -27,7 +28,7 @@
           }"
         ></div>
 
-        <!-- Contorno de Córdoba (siempre arriba) -->
+        <!-- Contorno de Córdoba -->
         <CordobaContour
           :width="IMAGE_WIDTH"
           :height="IMAGE_HEIGHT"
@@ -39,6 +40,9 @@
           }"
           :background="currentBackground"
         />
+
+        <!-- Leyenda de riesgo (por encima del contorno) -->
+        <RiskLegend :show="showRiskLegend" />
       </div>
     </div>
   </div>
@@ -48,6 +52,7 @@
 import MainHeader from "@/components/MainHeader.vue";
 import RiskToolbar from "@/components/RiskToolbar.vue";
 import CordobaContour from "@/components/CordobaContour.vue";
+import RiskLegend from "@/components/RiskLegend.vue";
 import { CORDOBA_BOUNDS } from "@/constants/geographicBounds.js";
 import { COLORS } from "@/constants/colors.js";
 
@@ -57,6 +62,7 @@ export default {
     MainHeader,
     RiskToolbar,
     CordobaContour,
+    RiskLegend,
   },
   data() {
     return {
@@ -65,12 +71,14 @@ export default {
       currentBackground: "marble", // marble por defecto
       customColor: "#ffffff",
       colors: COLORS,
+      showLegend: false, // Controla la visibilidad de la leyenda
       layers: [
         { name: "Inundaciones", active: false, opacity: 70 },
         { name: "Deslizamientos", active: false, opacity: 70 },
         { name: "Urbano", active: false, opacity: 70 },
         { name: "Agua", active: false, opacity: 70 },
         { name: "Expansión", active: false, opacity: 70 },
+        { name: "Riesgo", active: false, opacity: 70 },
       ],
     };
   },
@@ -115,6 +123,11 @@ export default {
         };
       }
     },
+
+    showRiskLegend() {
+      // Mostrar la leyenda cuando esté activada manualmente
+      return this.showLegend;
+    },
   },
   methods: {
     handleBackgroundChange(background) {
@@ -137,6 +150,10 @@ export default {
       this.layers[index].opacity = layer.opacity;
     },
 
+    handleLegendToggle(show) {
+      this.showLegend = show;
+    },
+
     getLayerImage(layerName) {
       const imageMap = {
         Inundaciones: "flood.jpeg",
@@ -144,6 +161,7 @@ export default {
         Urbano: "urban.jpeg",
         Agua: "water.jpeg",
         Expansión: "expansion.jpeg",
+        Riesgo: "riesgo.jpeg",
       };
       return imageMap[layerName] || "";
     },
@@ -192,5 +210,26 @@ export default {
   background-repeat: no-repeat;
   pointer-events: none;
   z-index: 1;
+}
+
+/* Risk Legend Styles */
+.image-container {
+  position: relative;
+}
+
+.risk-legend {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+}
+
+/* Responsive legend adjustments */
+@media (max-width: 768px) {
+  .risk-legend {
+    top: 5px;
+    left: 5px;
+    max-width: calc(100vw - 20px);
+  }
 }
 </style>

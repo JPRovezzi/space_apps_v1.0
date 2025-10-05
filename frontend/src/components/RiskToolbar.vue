@@ -44,6 +44,15 @@
         <span class="icon">📚</span>
       </button>
 
+      <!-- Leyenda -->
+      <button
+        class="toolbar-btn"
+        @click="toggleLegend"
+        :title="showLegend ? 'Ocultar leyenda' : 'Mostrar leyenda'"
+      >
+        <span class="icon">📊</span>
+      </button>
+
       <!-- Coordenadas -->
       <button
         class="toolbar-btn"
@@ -97,12 +106,14 @@ export default {
       showColorPicker: false,
       showLayersModal: false,
       showCoordinatesModal: false,
+      showLegend: false,
       layers: [
         { name: "Inundaciones", active: false, opacity: 70 },
         { name: "Deslizamientos", active: false, opacity: 70 },
         { name: "Urbano", active: false, opacity: 70 },
         { name: "Agua", active: false, opacity: 70 },
         { name: "Expansión", active: false, opacity: 70 },
+        { name: "Riesgo", active: false, opacity: 70 },
       ],
     };
   },
@@ -131,6 +142,11 @@ export default {
         index,
         layer: this.layers[index],
       });
+    },
+
+    toggleLegend() {
+      this.showLegend = !this.showLegend;
+      this.$emit("legend-toggle", this.showLegend);
     },
 
     handleLayersAccept() {
