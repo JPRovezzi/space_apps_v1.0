@@ -27,6 +27,58 @@
                   {{ layer.active ? "⏸️" : "▶️" }}
                 </button>
 
+                <!-- Subir/Bajar orden -->
+                <div class="order-buttons">
+                  <button
+                    class="order-btn"
+                    @click="$emit('layer-move-up', index)"
+                    :disabled="index === 0"
+                    title="Subir orden"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    class="order-btn"
+                    @click="$emit('layer-move-down', index)"
+                    :disabled="index === layers.length - 1"
+                    title="Bajar orden"
+                  >
+                    ↓
+                  </button>
+                </div>
+
+                <!-- Selector de color -->
+                <select
+                  class="color-select"
+                  :value="layer.color || '#0042A6'"
+                  @change="
+                    $emit('layer-color-change', {
+                      index,
+                      color: $event.target.value,
+                    })
+                  "
+                >
+                  <option value="#0042A6">Electric Blue</option>
+                  <option value="#07173F">Deep Blue</option>
+                  <option value="#eafe07">Neon Yellow</option>
+                  <option value="#FFFFFF">White</option>
+                  <option value="#0960E1">Neon Blue</option>
+                  <option value="#2E96F5">Blue Yonder</option>
+                  <option value="#E43700">Rocket RED</option>
+                  <option value="#8E1100">Martian Red</option>
+                  <option value="#FF6B35">Orange</option>
+                  <option value="#00FF88">Green</option>
+                </select>
+
+                <!-- Invertir escala -->
+                <button
+                  class="invert-btn"
+                  @click="$emit('layer-invert-scale', index)"
+                  title="Invertir escala"
+                >
+                  🔄
+                </button>
+
                 <!-- Slider de opacidad -->
                 <div class="opacity-control">
                   <input
@@ -49,6 +101,12 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="cancel-btn" @click="$emit('close')">Cancelar</button>
+        <button class="accept-btn" @click="$emit('accept')">Aceptar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -66,7 +124,16 @@ export default {
       default: () => [],
     },
   },
-  emits: ["close", "layer-toggle", "layer-opacity-change"],
+  emits: [
+    "close",
+    "layer-toggle",
+    "layer-opacity-change",
+    "layer-move-up",
+    "layer-move-down",
+    "layer-color-change",
+    "layer-invert-scale",
+    "accept",
+  ],
 };
 </script>
 
@@ -90,9 +157,9 @@ export default {
   backdrop-filter: blur(20px);
   border-radius: 12px;
   padding: 0;
-  max-width: 600px;
+  max-width: 700px;
   width: 90%;
-  max-height: 90vh;
+  max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
@@ -101,14 +168,14 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .color-modal-header h3 {
   margin: 0;
   color: #333;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 
 .close-btn {
@@ -133,7 +200,7 @@ export default {
 }
 
 .layers-modal-body {
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
 }
 
 .layers-table {
@@ -146,7 +213,7 @@ export default {
 
 .layers-table th,
 .layers-table td {
-  padding: 1rem;
+  padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -165,16 +232,17 @@ export default {
 .layer-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  min-width: 250px;
+  gap: 0.5rem;
+  min-width: 350px;
+  flex-wrap: wrap;
 }
 
 .play-pause-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
@@ -226,14 +294,150 @@ export default {
   text-align: right;
 }
 
+.order-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.order-btn {
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #555;
+}
+
+.order-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.order-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.color-select {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-size: 0.75rem;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.color-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.invert-btn {
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #555;
+}
+
+.invert-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
 @media (max-width: 768px) {
   .layer-actions {
-    gap: 0.75rem;
+    gap: 0.5rem;
     min-width: auto;
+    flex-wrap: wrap;
   }
 
   .opacity-control {
     width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .color-select {
+    min-width: 100px;
+    font-size: 0.75rem;
+  }
+
+  .order-buttons {
+    gap: 0.125rem;
+  }
+
+  .order-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cancel-btn,
+.accept-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cancel-btn {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.cancel-btn:hover {
+  background: rgba(108, 117, 125, 0.2);
+}
+
+.accept-btn {
+  background: #0042a6;
+  color: white;
+}
+
+.accept-btn:hover {
+  background: #003080;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .modal-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .cancel-btn,
+  .accept-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
   }
 }
 </style>
