@@ -1,4 +1,4 @@
-# Astrochingolo - Análisis de Riesgos Urbanos
+# Astrochingolo - Análisis de riesgos para ciudades del hoy y del mañana
 
 Plataforma web innovadora que combina datos satelitales de NASA con análisis geoespacial avanzado para evaluar riesgos ambientales en la expansión urbana de la provincia de Córdoba, Argentina. Desarrollada para NASA Space Apps Challenge Córdoba 2025. Puede ver una vista previa del proyecto en: https://lovely-chebakia-bf37e1.netlify.app/
 
@@ -10,8 +10,8 @@ Astrochingolo es una plataforma web que combina datos satelitales de NASA con an
 
 La plataforma integra múltiples fuentes de datos geoespaciales y satelitales para crear mapas de riesgo interactivos:
 
-1. **Captura de Datos**: Integra datos de NASA FIRMS (incendios), datos geoespaciales de la provincia de Córdoba y capas de riesgo generadas por algoritmos de análisis
-2. **Procesamiento**: Aplica técnicas de normalización estadística (Min-Max, Z-Score, Robust Scaling) para estandarizar datos heterogéneos
+1. **Captura de Datos**: Integra datos de NASA, datos geoespaciales de la provincia de Córdoba y capas de riesgo generadas por algoritmos de análisis
+2. **Procesamiento**: Aplica técnicas de normalización estadística para estandarizar datos heterogéneos
 3. **Visualización**: Crea mapas superpuestos con capas de riesgo codificadas por colores, permitiendo análisis visual intuitivo
 4. **Análisis Interactivo**: Los usuarios pueden activar/desactivar capas, ajustar opacidades y explorar riesgos específicos por ubicación
 
@@ -253,15 +253,9 @@ Una vez ejecutados ambos servicios:
 
 ## 📖 Uso
 
-1. **Página de Inicio**: Diseño inspirado en NASA con información del proyecto
+1. **Página de Inicio**: Diseño con información del proyecto
 2. **Análisis**: Ingrese datos numéricos separados por comas
 3. **Resultados**: Visualización de datos normalizados con opción de exportar
-
-### Tipos de Normalización Disponibles
-
-- **Min-Max Scaling**: Escala valores al rango [0,1]
-- **Z-Score**: Media = 0, Desviación estándar = 1
-- **Robust Scaling**: Basado en mediana y rango intercuartílico
 
 ## 🏗️ Arquitectura
 
@@ -300,7 +294,6 @@ space_apps_v1.0/
 
 - [ ] Modelos predictivos de Machine Learning para proyección de riesgos futuros
 - [ ] Integración con datos meteorológicos en tiempo real
-- [ ] Sistema de alertas automatizadas para zonas de alto riesgo
 - [ ] API pública para integración con sistemas municipales
 - [ ] Análisis comparativo entre múltiples regiones
 - [ ] Exportación de reportes en múltiples formatos (PDF, CSV, GeoJSON)
