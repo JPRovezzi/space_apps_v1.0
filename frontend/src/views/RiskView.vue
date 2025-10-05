@@ -6,6 +6,7 @@
       @layer-toggle="handleLayerToggle"
       @layer-opacity-change="handleLayerOpacityChange"
       @legend-toggle="handleLegendToggle"
+      @map-controls-toggle="handleMapControlsToggle"
     />
     <div class="content">
       <div
@@ -48,7 +49,7 @@
         <RiskLegend :show="showRiskLegend" />
 
         <!-- Rosa de los vientos y escala del mapa -->
-        <div class="map-controls">
+        <div v-show="showMapControls" class="map-controls">
           <!-- Rosa de los vientos -->
           <div
             class="compass-rose"
@@ -159,6 +160,7 @@ export default {
         { name: "Riesgo", active: false, opacity: 70 },
         { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
+      showMapControls: true, // Mostrar controles del mapa por defecto
     };
   },
   computed: {
@@ -279,6 +281,10 @@ export default {
 
     handleMouseLeave() {
       this.showCoordinates = false;
+    },
+
+    handleMapControlsToggle(show) {
+      this.showMapControls = show;
     },
 
     // Cálculos geográficos para rosa de los vientos y escala

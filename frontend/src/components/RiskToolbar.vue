@@ -61,6 +61,19 @@
       >
         <span class="icon">📍</span>
       </button>
+
+      <!-- Controles del mapa -->
+      <button
+        class="toolbar-btn"
+        @click="toggleMapControls"
+        :title="
+          showMapControls
+            ? 'Ocultar controles del mapa'
+            : 'Mostrar controles del mapa'
+        "
+      >
+        <span class="icon">{{ showMapControls ? "🧭" : "🚫" }}</span>
+      </button>
     </div>
 
     <!-- Modal de selección de colores -->
@@ -107,6 +120,7 @@ export default {
       showLayersModal: false,
       showCoordinatesModal: false,
       showLegend: false,
+      showMapControls: true, // Mostrar controles por defecto
       layers: [
         { name: "Inundaciones", active: false, opacity: 70 },
         { name: "Deslizamientos", active: false, opacity: 70 },
@@ -153,6 +167,11 @@ export default {
     handleLayersAccept() {
       // Cerrar el modal cuando se aceptan los cambios
       this.showLayersModal = false;
+    },
+
+    toggleMapControls() {
+      this.showMapControls = !this.showMapControls;
+      this.$emit("map-controls-toggle", this.showMapControls);
     },
   },
 };
