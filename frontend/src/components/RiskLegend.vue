@@ -39,11 +39,11 @@ export default {
       legendItems: {
         99: {
           color: "#0042A6",
-          description: "Sin dato",
+          description: "Sin datos",
         },
         0: {
           color: "#eafe07",
-          description: "No válido",
+          description: "Área no válida",
         },
         1: {
           color: "#f9d7cc",
