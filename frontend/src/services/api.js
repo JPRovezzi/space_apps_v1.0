@@ -76,6 +76,16 @@ export const nasaAPI = {
   async getAvailableFireLayers() {
     return api.get("/api/v1/nasa/fire-layers");
   },
+
+  // Obtener incidentes de incendio detallados para visualización en mapa
+  async getFireIncidents(year, bbox) {
+    return api.get("/api/v1/nasa/fire-incidents", {
+      params: {
+        year: year || new Date().getFullYear(),
+        bbox: bbox || "-66,-35,-62,-31",
+      },
+    });
+  },
 };
 
 export default api;

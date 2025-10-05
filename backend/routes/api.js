@@ -33,6 +33,7 @@ router.get("/nasa/fire-history", nasaController.getFireHistory);
 router.get("/nasa/fire-stats", nasaController.getFireStats);
 router.get("/nasa/fire-layers", nasaController.getFireLayers);
 router.get("/nasa/fire-incidents", nasaController.getFireIncidents);
+router.get("/nasa/health", nasaController.checkApiHealth);
 
 // File upload routes
 const {
@@ -123,6 +124,7 @@ router.get("/", (req, res) => {
         "fire-stats": "/api/nasa/fire-stats",
         "fire-layers": "/api/nasa/fire-layers",
         "fire-incidents": "/api/nasa/fire-incidents",
+        health: "/api/nasa/health",
       },
       upload: {
         "upload-data": "/api/upload-data",

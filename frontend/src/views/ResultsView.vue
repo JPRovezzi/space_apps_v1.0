@@ -18,7 +18,9 @@
         <div class="stats">
           <div class="stat">
             <span class="label">Tipo de Normalización:</span>
-            <span class="value">{{ currentAnalysis.normalization_type || 'minmax' }}</span>
+            <span class="value">{{
+              currentAnalysis.normalization_type || "minmax"
+            }}</span>
           </div>
           <div class="stat">
             <span class="label">Datos Procesados:</span>
@@ -34,11 +36,17 @@
       <div class="data-section">
         <h3>Datos Normalizados</h3>
         <div class="data-display">
-          <div class="data-item" v-for="(value, index) in currentAnalysis.data" :key="index">
+          <div
+            class="data-item"
+            v-for="(value, index) in currentAnalysis.data"
+            :key="index"
+          >
             <span class="index">{{ index + 1 }}</span>
             <span class="original">{{ value }}</span>
             <span class="arrow">→</span>
-            <span class="normalized">{{ (currentAnalysis.normalized?.[index] || value).toFixed(4) }}</span>
+            <span class="normalized">{{
+              (currentAnalysis.normalized?.[index] || value).toFixed(4)
+            }}</span>
           </div>
         </div>
       </div>
@@ -56,35 +64,43 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions } from "vuex";
+import { COLORS } from "../constants/colors.js";
 
 export default {
-  name: 'ResultsView',
+  name: "ResultsView",
+  data() {
+    return {
+      colors: COLORS, // Colores oficiales NASA Space Apps
+    };
+  },
   computed: {
-    ...mapState(['currentAnalysis'])
+    ...mapState(["currentAnalysis"]),
   },
   methods: {
-    ...mapActions(['clearCurrentAnalysis']),
+    ...mapActions(["clearCurrentAnalysis"]),
 
     exportResults() {
-      if (!this.currentAnalysis) return
+      if (!this.currentAnalysis) return;
 
       const data = {
         timestamp: new Date().toISOString(),
-        analysis: this.currentAnalysis
-      }
+        analysis: this.currentAnalysis,
+      };
 
-      const dataStr = JSON.stringify(data, null, 2)
-      const dataBlob = new Blob([dataStr], { type: 'application/json' })
-      const url = URL.createObjectURL(dataBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `resultados_${new Date().toISOString().split('T')[0]}.json`
-      link.click()
-      URL.revokeObjectURL(url)
-    }
-  }
-}
+      const dataStr = JSON.stringify(data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `resultados_${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -100,13 +116,21 @@ export default {
 }
 
 .header h2 {
+  font-family: var(--font-heading);
+  font-weight: 900; /* Fira Sans Black */
   color: #2c3e50;
   margin-bottom: 0.5rem;
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
 }
 
 .header p {
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
   color: #7f8c8d;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  line-height: 1.5;
 }
 
 .no-results {
@@ -117,7 +141,8 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.summary-card, .data-section {
+.summary-card,
+.data-section {
   background: white;
   padding: 2rem;
   border-radius: 12px;
@@ -125,10 +150,14 @@ export default {
   margin-bottom: 2rem;
 }
 
-.summary-card h3, .data-section h3 {
+.summary-card h3,
+.data-section h3 {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   color: #2c3e50;
   margin-bottom: 1.5rem;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
 }
 
 .stats {
@@ -148,12 +177,16 @@ export default {
 }
 
 .label {
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-weight: 700; /* Overpass Bold */
   color: #2c3e50;
+  letter-spacing: 0.025em;
 }
 
 .value {
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
+  color: #495057;
 }
 
 .status-success {
@@ -196,7 +229,7 @@ export default {
   flex: 1;
   text-align: center;
   color: #2c3e50;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .arrow {
@@ -210,7 +243,7 @@ export default {
   text-align: center;
   color: #27ae60;
   font-weight: bold;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .actions {
@@ -220,13 +253,15 @@ export default {
   margin-top: 2rem;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
-  font-weight: 600;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -234,11 +269,12 @@ export default {
   transition: all 0.3s ease;
   min-width: 140px;
   justify-content: center;
+  letter-spacing: 0.025em;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
+  background: var(--gradient-accent);
+  color: var(--text-primary);
   box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
 }
 
@@ -277,7 +313,8 @@ export default {
     flex-direction: column;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
   }
 }

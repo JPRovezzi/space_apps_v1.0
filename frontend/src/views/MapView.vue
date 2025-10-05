@@ -1,12 +1,16 @@
 <template>
   <div class="map-view">
-    <header class="map-header">
-      <router-link to="/" class="back-button">
-        ← Volver
-      </router-link>
-      <h1 class="map-title">Mapa de Córdoba</h1>
-    </header>
+    <MainHeader title="Mapa de Córdoba" />
     <div class="divider"></div>
+
+    <MapControls
+      :zoom-locked="zoomLocked"
+      :nasa-api-connected="nasaApiConnected"
+      :date-range="dateRange"
+      @toggle-zoom-lock="toggleZoomLock"
+      @fit-bounds="fitToCordobaBounds"
+      @update-date-range="updateDateRange"
+    />
 
     <div class="map-container">
       <!-- Sidebar de control de capas -->
@@ -22,10 +26,9 @@
         <div class="sidebar-content">
           <div class="layers-list">
             <div
-              v-for="layer in layers"
+              v-for="layer in layers.filter((l) => !l.hidden)"
               :key="layer.id"
               class="layer-item"
-              :data-fire-layer="layer.type === 'nasa-fire'"
             >
               <label class="layer-checkbox">
                 <input
@@ -45,78 +48,6 @@
               </div>
             </div>
           </div>
-
-
-          <!-- Estadísticas de incendios -->
-          <div v-if="hasActiveFireLayers" class="fire-stats">
-            <div v-if="fireStats.error" class="offline-banner">
-              🔌 Backend desconectado - Sin datos científicos disponibles
-            </div>
-            <h4 class="stats-title">
-              📊 Estadísticas
-              <span v-if="fireStats.error" class="error-badge">❌ Sin conexión</span>
-              <span v-else-if="fireStats.dataSource === 'NASA FIRMS'" class="nasa-badge">🛰️ NASA Real</span>
-            </h4>
-            <div class="stat-item">
-              <span class="stat-label">Incendios {{ selectedYear }}:</span>
-              <span class="stat-value" :data-empty="fireStats.currentYearFires === null">
-                {{ fireStats.currentYearFires !== null ? fireStats.currentYearFires : '—' }}
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Área afectada:</span>
-              <span class="stat-value" :data-empty="fireStats.burnedArea === null">
-                {{ fireStats.burnedArea !== null ? fireStats.burnedArea + ' ha' : '—' }}
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Promedio histórico:</span>
-              <span class="stat-value" :data-empty="fireStats.avgFiresPerYear === null">
-                {{ fireStats.avgFiresPerYear !== null ? fireStats.avgFiresPerYear + '/año' : '—' }}
-              </span>
-            </div>
-
-            <!-- Información adicional sobre fuente de datos -->
-            <div v-if="!fireStats.error && fireStats.dataSource === 'NASA FIRMS'" class="data-info">
-              <div class="info-item">
-                <span class="info-label">📡 Fuente:</span>
-                <span class="info-value">{{ fireStats.dataSource }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">🔬 Confianza:</span>
-                <span class="info-value">{{ fireStats.confidence }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">⏰ Última actualización:</span>
-                <span class="info-value">{{ formatLastUpdate(fireStats.lastUpdated) }}</span>
-              </div>
-            </div>
-
-            <!-- Información adicional en modo offline -->
-            <div v-if="fireStats.error" class="data-info">
-              <div class="info-item">
-                <span class="info-label">📡 Fuente:</span>
-                <span class="info-value">{{ fireStats.dataSource }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">🔬 Estado:</span>
-                <span class="info-value">{{ fireStats.confidence }}</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">⏰ Datos:</span>
-                <span class="info-value">No disponibles</span>
-              </div>
-            </div>
-
-            <div v-if="fireStats.error" class="error-info">
-              <div class="error-message">
-                🔌 Backend desconectado
-                <br><small>Para ver datos reales de NASA, ejecute:</small>
-                <br><code class="command">cd backend && python run.py</code>
-                <br><small>{{ fireStats.error }}</small>
-              </div>
-            </div>
-          </div>
         </div>
       </aside>
 
@@ -127,388 +58,700 @@
 </template>
 
 <script>
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import cordobaGeoJson from '../assets/data/cordoba-province.js'
-import { nasaAPI } from '../services/api.js'
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import cordobaGeoJson from "../assets/data/cordoba-province.js";
+import { simulatedFireIncidents } from "../assets/data/simulated-fire-incidents.js";
+import MainHeader from "../components/MainHeader.vue";
+import MapControls from "../components/MapControls.vue";
+import {
+  CORDOBA_BOUNDS,
+  CORDOBA_ZOOM_CONFIG,
+} from "../constants/geographicBounds.js";
+import { COLORS } from "../constants/colors.js";
+
+// Constantes para límites geográficos (ahora importadas desde constants/geographicBounds.js)
 
 // Fix for default markers in Leaflet with webpack
-delete L.Icon.Default.prototype._getIconUrl
+delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-})
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl: require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+});
 
 export default {
-  name: 'MapView',
+  name: "MapView",
+  components: {
+    MainHeader,
+    MapControls,
+  },
   data() {
     return {
-      zoom: 9,
-      center: [-32.25, -63.7], // Centro aproximado de la provincia de Córdoba
+      zoom: CORDOBA_ZOOM_CONFIG.DEFAULT_ZOOM,
+      center: CORDOBA_BOUNDS.CENTER, // Centro aproximado de la provincia de Córdoba
       cordobaGeoJson: cordobaGeoJson,
       map: null,
+      cordobaLayer: null, // Referencia a la capa de Córdoba
       sidebarCollapsed: false,
+      isZooming: false, // Flag para evitar operaciones de capa durante zoom
       layers: [
         {
-          id: 'cordoba-province',
-          name: 'Provincia de Córdoba',
+          id: "cordoba-province",
+          name: "Provincia de Córdoba",
           visible: true,
           layerRef: null,
-          icon: '🏛️',
-          description: 'Límites provinciales'
+          icon: "🏛️",
+          description: "Límites provinciales",
+          hidden: false,
         },
         {
-          id: 'cordoba-capital',
-          name: 'Córdoba Capital',
+          id: "cordoba-capital",
+          name: "Córdoba Capital",
           visible: true,
           layerRef: null,
-          icon: '🏙️',
-          description: 'Ciudad capital'
+          icon: "🏙️",
+          description: "Ciudad capital",
+          hidden: true,
         },
         {
-          id: 'influence-zone',
-          name: 'Zona de Influencia',
+          id: "influence-zone",
+          name: "Zona de Influencia",
           visible: true,
           layerRef: null,
-          icon: '🎯',
-          description: 'Área de 30km de radio'
+          icon: "🎯",
+          description: "Área de 30km de radio",
+          hidden: true,
         },
         {
-          id: 'sub-region',
-          name: 'Sub-región Ejemplo',
+          id: "sub-region",
+          name: "Sub-región Ejemplo",
           visible: true,
           layerRef: null,
-          icon: '🔷',
-          description: 'Polígono adicional'
+          icon: "🔷",
+          description: "Polígono adicional",
+          hidden: true,
         },
         {
-          id: 'route-line',
-          name: 'Ruta de Ejemplo',
+          id: "route-line",
+          name: "Ruta de Ejemplo",
           visible: true,
           layerRef: null,
-          icon: '🛣️',
-          description: 'Línea trazada'
+          icon: "🛣️",
+          description: "Línea trazada",
+          hidden: true,
+        },
+        {
+          id: "simulated-fire",
+          name: "Incendios Simulados",
+          visible: true,
+          layerRef: null,
+          icon: "🔥",
+          description: "Puntos de incendios detectados",
+          hidden: false,
+        },
+        {
+          id: "cordoba-fire-nasa",
+          name: "Incendios Córdoba (NASA)",
+          visible: false,
+          layerRef: null,
+          icon: "🚀",
+          description: "Datos reales de FIRMS",
+          hidden: true,
+        },
+        {
+          id: "modis-data",
+          name: "MODIS",
+          visible: true,
+          layerRef: null,
+          icon: "🛰️",
+          description: "Datos MODIS Córdoba",
+          hidden: false,
         },
       ],
-      selectedYear: new Date().getFullYear(),
-      fireStats: {
-        currentYearFires: 0,
-        burnedArea: 0,
-        avgFiresPerYear: 0,
-        isSimulated: false,
-        error: null,
-        dataSource: "No disponible",
-        lastUpdated: null,
-        confidence: null
-      }
-    }
+      colors: COLORS, // Colores oficiales NASA Space Apps
+      zoomLocked: false, // Por defecto zoom bloqueado en Córdoba
+      dateRange: {
+        start: "2024-01-15",
+        end: "2024-10-08",
+      },
+      nasaApiConnected: false,
+      nasaConnectionCheckInterval: null,
+    };
   },
-  computed: {
-    hasActiveFireLayers() {
-      // Ya no hay capas de incendios
-      return false
-    }
-  },
-  mounted() {
-    this.initMap()
-    this.loadFireStats()
+  async mounted() {
+    this.initMap();
+
+    // Verificar conexión con NASA API inicialmente
+    await this.checkNasaApiConnection();
+
+    // Configurar verificación periódica cada 30 segundos
+    this.nasaConnectionCheckInterval = setInterval(() => {
+      this.checkNasaApiConnection();
+    }, 30000);
   },
   beforeUnmount() {
     if (this.map) {
-      this.map.remove()
+      this.map.remove();
+    }
+
+    // Limpiar intervalo de verificación de conexión NASA
+    if (this.nasaConnectionCheckInterval) {
+      clearInterval(this.nasaConnectionCheckInterval);
     }
   },
   methods: {
-    initMap() {
+    async initMap() {
       // Crear el mapa
-      const mapContainer = this.$refs.mapContainer
+      const mapContainer = this.$refs.mapContainer;
       if (mapContainer) {
         this.map = L.map(mapContainer, {
           center: this.center,
           zoom: this.zoom,
-          minZoom: 8,  // Zoom mínimo para evitar alejarse demasiado
-          maxZoom: 12, // Zoom máximo para evitar acercarse demasiado
-          maxBounds: [
-            [-29.0, -61.0], // Esquina noroeste (mínimo margen)
-            [-35.5, -66.0]  // Esquina sureste (mínimo margen)
-          ],
-          maxBoundsViscosity: 1.0 // Hace que los límites sean estrictos
-        })
+          // Las restricciones se aplicarán dinámicamente en updateMapBounds()
+        });
 
         // Agregar control de escala
-        L.control.scale({
-          position: 'bottomright',
-          metric: true,
-          imperial: false,
-          maxWidth: 200
-        }).addTo(this.map)
+        L.control
+          .scale({
+            position: "bottomright",
+            metric: true,
+            imperial: false,
+            maxWidth: 200,
+          })
+          .addTo(this.map);
 
         // Agregar control de coordenadas del mouse
-        this.addCoordinatesControl()
+        this.addCoordinatesControl();
 
         // Añadir capa de tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(this.map)
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(this.map);
 
-      // Añadir capa GeoJSON de Córdoba
-      const cordobaLayer = L.geoJSON(this.cordobaGeoJson, {
-        style: {
-          color: '#ffffff',
-          weight: 3,
-          opacity: 0.9,
-          fillColor: 'rgba(255, 255, 255, 0.15)',
-          fillOpacity: 0.2
-        },
-        onEachFeature: (feature, layer) => {
-          layer.on({
-            mouseover: (e) => {
-              const layer = e.target;
-              layer.setStyle({
-                weight: 4,
-                color: '#ffffff',
-                fillOpacity: 0.3
-              });
-            },
-            mouseout: (e) => {
-              const layer = e.target;
-              layer.setStyle({
-                color: '#ffffff',
-                weight: 3,
-                opacity: 0.9,
-                fillColor: 'rgba(255, 255, 255, 0.15)',
-                fillOpacity: 0.2
-              });
-            }
-          });
+        // Añadir capa GeoJSON de Córdoba
+        const cordobaLayer = L.geoJSON(this.cordobaGeoJson, {
+          style: {
+            color: "#ffffff",
+            weight: 3,
+            opacity: 0.9,
+            fillColor: "rgba(255, 255, 255, 0.15)",
+            fillOpacity: 0.2,
+          },
+          onEachFeature: (feature, layer) => {
+            layer.on({
+              mouseover: (e) => {
+                const layer = e.target;
+                layer.setStyle({
+                  weight: 4,
+                  color: "#ffffff",
+                  fillOpacity: 0.3,
+                });
+              },
+              mouseout: (e) => {
+                const layer = e.target;
+                layer.setStyle({
+                  color: "#ffffff",
+                  weight: 3,
+                  opacity: 0.9,
+                  fillColor: "rgba(255, 255, 255, 0.15)",
+                  fillOpacity: 0.2,
+                });
+              },
+            });
+          },
+        }).addTo(this.map);
+
+        // Almacenar referencia de la capa de Córdoba
+        this.cordobaLayer = cordobaLayer; // Referencia global para fitToCordobaBounds
+        const cordobaLayerData = this.layers.find(
+          (l) => l.id === "cordoba-province"
+        );
+        if (cordobaLayerData) {
+          cordobaLayerData.layerRef = cordobaLayer;
         }
-      }).addTo(this.map)
 
-      // Almacenar referencia de la capa de Córdoba
-      const cordobaLayerData = this.layers.find(l => l.id === 'cordoba-province')
-      if (cordobaLayerData) {
-        cordobaLayerData.layerRef = cordobaLayer
-      }
+        // Ajustar el mapa exactamente a los límites de Córdoba (sin padding)
+        this.map.fitBounds(cordobaLayer.getBounds(), {
+          padding: [0, 0], // Sin padding para ajuste perfecto al ancho del polígono
+        });
 
-      // Ajustar el mapa exactamente a los límites de Córdoba (sin padding)
-      this.map.fitBounds(cordobaLayer.getBounds(), {
-        padding: [0, 0] // Sin padding para ajuste perfecto al ancho del polígono
-      })
+        // Agregar listeners para detectar animaciones de zoom
+        this.map.on("zoomstart", () => {
+          this.isZooming = true;
+        });
+        this.map.on("zoomend", () => {
+          this.isZooming = false;
+        });
 
-      // Crear elementos del mapa y almacenar referencias
-      this.createMapElements();
+        // Crear elementos del mapa y almacenar referencias
+        await this.createMapElements();
+
+        // Aplicar restricciones de zoom iniciales
+        this.updateMapBounds();
       }
     },
     toggleSidebar() {
-      this.sidebarCollapsed = !this.sidebarCollapsed
+      this.sidebarCollapsed = !this.sidebarCollapsed;
     },
     toggleLayer(layerId) {
-      const layer = this.layers.find(l => l.id === layerId)
-      if (layer) {
-        layer.visible = !layer.visible
+      const layer = this.layers.find((l) => l.id === layerId);
+      if (layer && layer.layerRef) {
+        layer.visible = !layer.visible;
 
-        if (layer.layerRef) {
-          // Manejo normal para otras capas
-          if (layer.visible) {
-            layer.layerRef.addTo(this.map)
-          } else {
-            this.map.removeLayer(layer.layerRef)
-          }
+        // Manejo uniforme para todas las capas (incluyendo incendios simulados)
+        if (layer.visible) {
+          layer.layerRef.addTo(this.map);
+        } else {
+          this.map.removeLayer(layer.layerRef);
         }
       }
     },
-    onYearChange() {
-      this.loadFireStats() // Recargar estadísticas para el nuevo año
+    toggleZoomLock() {
+      this.zoomLocked = !this.zoomLocked;
+      this.updateMapBounds();
+      if (this.zoomLocked) {
+        // Si se bloquea el zoom, centrar automáticamente en Córdoba
+        this.fitToCordobaBounds();
+      }
     },
-    async loadFireStats() {
-      try {
-        const response = await nasaAPI.getFireStats(this.selectedYear)
-        this.fireStats = {
-          currentYearFires: response.total_fires || 0,
-          burnedArea: response.total_burned_area_ha || 0,
-          avgFiresPerYear: (response.avg_fires_per_month || 0) * 12,
-          isSimulated: false,
-          dataSource: response.data_source || "NASA FIRMS",
-          lastUpdated: response.last_updated || null,
-          confidence: response.confidence || null,
-          error: null
-        }
-      } catch (error) {
-        this.fireStats = {
-          currentYearFires: null,
-          burnedArea: null,
-          avgFiresPerYear: null,
-          isSimulated: false,
-          error: "Backend no disponible",
-          dataSource: "No disponible",
-          lastUpdated: null,
-          confidence: null
-        }
+    updateDateRange(newDateRange) {
+      this.dateRange = newDateRange;
+      // Actualizar capa de incendios cuando cambie el rango de fechas
+      this.createFireIncidentsLayer();
+    },
+    fitToCordobaBounds() {
+      if (this.map && this.cordobaGeoJson) {
+        this.map.fitBounds(this.cordobaLayer.getBounds(), {
+          padding: [20, 20],
+          maxZoom: this.zoomLocked
+            ? CORDOBA_ZOOM_CONFIG.MAX_ZOOM_LOCKED
+            : CORDOBA_ZOOM_CONFIG.MAX_ZOOM,
+        });
+      }
+    },
+    updateMapBounds() {
+      if (!this.map) return;
+
+      if (this.zoomLocked) {
+        // Aplicar restricciones de Córdoba
+        this.map.setMaxBounds(CORDOBA_BOUNDS.getLeafletBounds());
+        this.map.setMaxZoom(CORDOBA_ZOOM_CONFIG.MAX_ZOOM_LOCKED);
+        this.map.setMinZoom(CORDOBA_ZOOM_CONFIG.MIN_ZOOM);
+        this.map.options.maxBoundsViscosity = 1.0;
+      } else {
+        // Quitar restricciones - zoom libre
+        this.map.setMaxBounds(null);
+        this.map.setMaxZoom(CORDOBA_ZOOM_CONFIG.MAX_ZOOM);
+        this.map.setMinZoom(1);
+        this.map.options.maxBoundsViscosity = 0.0;
       }
     },
     formatLastUpdate(timestamp) {
-      if (!timestamp) return "Nunca"
+      if (!timestamp) return "Nunca";
       try {
-        const date = new Date(timestamp)
-        return date.toLocaleString('es-AR', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+        const date = new Date(timestamp);
+        return date.toLocaleString("es-AR", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
       } catch {
-        return "Desconocido"
+        return "Desconocido";
       }
     },
-    createMapElements() {
+    async createMapElements() {
       // 1. Marcador de Córdoba Capital
-      const capitalMarker = L.marker([-31.4167, -64.1833])
-        .addTo(this.map)
-        .bindPopup('Córdoba Capital<br><b>Población: ~1.5M</b>')
-        .openPopup();
+      const capitalMarker = L.marker([-31.4167, -64.1833]).bindPopup(
+        "Córdoba Capital<br><b>Población: ~1.5M</b>"
+      );
 
-      const capitalLayer = this.layers.find(l => l.id === 'cordoba-capital')
+      // Solo agregar al mapa si la capa es visible y no está oculta
+      const capitalLayer = this.layers.find((l) => l.id === "cordoba-capital");
+      if (capitalLayer && capitalLayer.visible && !capitalLayer.hidden) {
+        capitalMarker.addTo(this.map).openPopup();
+      }
       if (capitalLayer) {
-        capitalLayer.layerRef = capitalMarker
+        capitalLayer.layerRef = capitalMarker;
       }
 
       // 2. Círculo de zona de influencia
       const influenceCircle = L.circle([-32.5, -63.5], {
-        color: 'red',
-        fillColor: '#f03',
+        color: "red",
+        fillColor: "#f03",
         fillOpacity: 0.3,
-        radius: 30000 // 30km de radio
-      }).addTo(this.map)
-      .bindPopup('Zona de ejemplo');
+        radius: 30000, // 30km de radio
+      }).bindPopup("Zona de ejemplo");
 
-      const influenceLayer = this.layers.find(l => l.id === 'influence-zone')
+      // Solo agregar al mapa si la capa es visible y no está oculta
+      const influenceLayer = this.layers.find((l) => l.id === "influence-zone");
+      if (influenceLayer && influenceLayer.visible && !influenceLayer.hidden) {
+        influenceCircle.addTo(this.map);
+      }
       if (influenceLayer) {
-        influenceLayer.layerRef = influenceCircle
+        influenceLayer.layerRef = influenceCircle;
       }
 
       // 3. Polígono adicional (sub-región)
-      const subRegionPolygon = L.polygon([
-        [-31.0, -63.0],
-        [-31.5, -63.0],
-        [-31.5, -63.5],
-        [-31.0, -63.5]
-      ], {
-        color: 'blue',
-        fillColor: 'blue',
-        fillOpacity: 0.2
-      }).addTo(this.map);
+      const subRegionPolygon = L.polygon(
+        [
+          [-31.0, -63.0],
+          [-31.5, -63.0],
+          [-31.5, -63.5],
+          [-31.0, -63.5],
+        ],
+        {
+          color: "blue",
+          fillColor: "blue",
+          fillOpacity: 0.2,
+        }
+      );
 
-      const subRegionLayer = this.layers.find(l => l.id === 'sub-region')
+      // Solo agregar al mapa si la capa es visible y no está oculta
+      const subRegionLayer = this.layers.find((l) => l.id === "sub-region");
+      if (subRegionLayer && subRegionLayer.visible && !subRegionLayer.hidden) {
+        subRegionPolygon.addTo(this.map);
+      }
       if (subRegionLayer) {
-        subRegionLayer.layerRef = subRegionPolygon
+        subRegionLayer.layerRef = subRegionPolygon;
       }
 
       // 4. Línea (ruta de ejemplo)
-      const routeLine = L.polyline([
-        [-30.0, -64.0],
-        [-31.0, -64.5],
-        [-32.0, -65.0]
-      ], {
-        color: 'green',
-        weight: 3,
-        opacity: 0.7
-      }).addTo(this.map);
+      const routeLine = L.polyline(
+        [
+          [-30.0, -64.0],
+          [-31.0, -64.5],
+          [-32.0, -65.0],
+        ],
+        {
+          color: "green",
+          weight: 3,
+          opacity: 0.7,
+        }
+      );
 
-      const routeLayer = this.layers.find(l => l.id === 'route-line')
-      if (routeLayer) {
-        routeLayer.layerRef = routeLine
+      // Solo agregar al mapa si la capa es visible y no está oculta
+      const routeLayer = this.layers.find((l) => l.id === "route-line");
+      if (routeLayer && routeLayer.visible && !routeLayer.hidden) {
+        routeLine.addTo(this.map);
       }
+      if (routeLayer) {
+        routeLayer.layerRef = routeLine;
+      }
+
+      // 5. Crear capa de incendios simulados (filtrados por fecha)
+      this.createFireIncidentsLayer();
+
+      // 6. Crear capa de incendios reales de Córdoba (filtrados por fecha)
+      this.createRealFireIncidentsLayer();
+
+      // 7. Crear capa de datos MODIS para Córdoba
+      await this.createModisLayer();
     },
     addCoordinatesControl() {
       // Crear control personalizado para coordenadas
       const CoordinatesControl = L.Control.extend({
         options: {
-          position: 'bottomright'
+          position: "bottomright",
         },
 
-        onAdd: function(map) {
+        onAdd: function (map) {
           // Crear contenedor del control
-          const container = L.DomUtil.create('div', 'coordinates-control')
-          container.innerHTML = '<div class="coordinates-display">Mueva el mouse sobre el mapa</div>'
+          const container = L.DomUtil.create("div", "coordinates-control");
+          container.innerHTML =
+            '<div class="coordinates-display">Mueva el mouse sobre el mapa</div>';
 
           // Evitar que los eventos del mouse en el control se propaguen al mapa
-          L.DomEvent.disableClickPropagation(container)
-          L.DomEvent.disableScrollPropagation(container)
+          L.DomEvent.disableClickPropagation(container);
+          L.DomEvent.disableScrollPropagation(container);
 
           // Escuchar eventos del mouse en el mapa
-          map.on('mousemove', function(e) {
-            const lat = e.latlng.lat.toFixed(5)
-            const lng = e.latlng.lng.toFixed(5)
-            container.innerHTML = `<div class="coordinates-display">Lat: ${lat} | Lon: ${lng}</div>`
-          })
+          map.on("mousemove", function (e) {
+            const lat = e.latlng.lat.toFixed(5);
+            const lng = e.latlng.lng.toFixed(5);
+            container.innerHTML = `<div class="coordinates-display">Lat: ${lat} | Lon: ${lng}</div>`;
+          });
 
-          map.on('mouseout', function() {
-            container.innerHTML = '<div class="coordinates-display">Mueva el mouse sobre el mapa</div>'
-          })
+          map.on("mouseout", function () {
+            container.innerHTML =
+              '<div class="coordinates-display">Mueva el mouse sobre el mapa</div>';
+          });
 
-          return container
-        }
-      })
+          return container;
+        },
+      });
 
       // Agregar el control al mapa
-      new CoordinatesControl().addTo(this.map)
-    }
-  }
-}
+      new CoordinatesControl().addTo(this.map);
+    },
+    async checkNasaApiConnection() {
+      try {
+        // Crear AbortController para timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+
+        // Hacer una petición simple para verificar conexión
+        const response = await fetch(
+          "http://localhost:3000/api/v1/nasa/health",
+          {
+            method: "GET",
+            signal: controller.signal,
+          }
+        );
+
+        clearTimeout(timeoutId);
+        this.nasaApiConnected = response.ok;
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.warn("NASA API connection check timed out");
+        } else {
+          console.warn("Error checking NASA API connection:", error);
+        }
+        this.nasaApiConnected = false;
+      }
+    },
+    createFireIncidentsLayer() {
+      // Filtrar incendios por rango de fechas
+      const filteredIncidents = simulatedFireIncidents.filter((incident) => {
+        const incidentDate = new Date(incident.acq_date);
+        const startDate = new Date(this.dateRange.start);
+        const endDate = new Date(this.dateRange.end);
+        return incidentDate >= startDate && incidentDate <= endDate;
+      });
+
+      const fireMarkers = [];
+
+      filteredIncidents.forEach((incident) => {
+        // Crear círculo rojo para cada incendio
+        const fireCircle = L.circle([incident.latitude, incident.longitude], {
+          color: "red",
+          fillColor: "#ff0000",
+          fillOpacity: 0.8,
+          radius: 500, // Radio fijo de 500 metros
+          weight: 2,
+        }).bindPopup(`
+            <div style="font-family: Arial, sans-serif; font-size: 12px;">
+              <strong>🔥 Incendio Detectado</strong><br>
+              <strong>Fecha:</strong> ${incident.acq_date}<br>
+              <strong>Hora:</strong> ${incident.acq_time}<br>
+              <strong>Confianza:</strong> ${incident.confidence}%<br>
+              <strong>Brillo:</strong> ${incident.brightness} K<br>
+              <strong>Satélite:</strong> ${incident.satellite}<br>
+              <strong>Modo:</strong> ${
+                incident.daynight === "D" ? "Diurno" : "Nocturno"
+              }<br>
+              <strong>Coordenadas:</strong> ${incident.latitude.toFixed(
+                4
+              )}, ${incident.longitude.toFixed(4)}
+            </div>
+          `);
+
+        fireMarkers.push(fireCircle);
+      });
+
+      // Remover capa anterior si existe
+      const simulatedLayer = this.layers.find((l) => l.id === "simulated-fire");
+      if (simulatedLayer && simulatedLayer.layerRef) {
+        this.map.removeLayer(simulatedLayer.layerRef);
+      }
+
+      // Crear nueva capa
+      const fireLayerGroup = L.layerGroup(fireMarkers);
+
+      // Solo añadir al mapa si la capa está visible y no está oculta
+      if (simulatedLayer && simulatedLayer.visible && !simulatedLayer.hidden) {
+        fireLayerGroup.addTo(this.map);
+      }
+
+      // Actualizar referencia
+      if (simulatedLayer) {
+        simulatedLayer.layerRef = fireLayerGroup;
+      }
+    },
+    async createRealFireIncidentsLayer() {
+      try {
+        // Obtener datos reales de NASA FIRMS para Córdoba
+        const currentYear = new Date().getFullYear();
+        const response = await fetch(
+          `http://localhost:3000/api/v1/nasa/fire-incidents?year=${currentYear}&bbox=-66,-35,-62,-31`
+        );
+        const data = await response.json();
+
+        if (!data.success || !data.data.incidents) {
+          console.warn("No se pudieron obtener datos de incendios reales");
+          return;
+        }
+
+        // Filtrar por rango de fechas
+        const filteredIncidents = data.data.incidents.filter((incident) => {
+          const incidentDate = new Date(incident.acq_date);
+          const startDate = new Date(this.dateRange.start);
+          const endDate = new Date(this.dateRange.end);
+          return incidentDate >= startDate && incidentDate <= endDate;
+        });
+
+        const fireMarkers = [];
+
+        filteredIncidents.forEach((incident) => {
+          // Crear círculo rojo para cada incendio real (sin popup)
+          const fireCircle = L.circle([incident.latitude, incident.longitude], {
+            color: "red",
+            fillColor: "#ff0000",
+            fillOpacity: 0.8,
+            radius: 500, // Radio fijo de 500 metros
+            weight: 2,
+          });
+
+          fireMarkers.push(fireCircle);
+        });
+
+        // Remover capa anterior si existe
+        const nasaLayer = this.layers.find((l) => l.id === "cordoba-fire-nasa");
+        if (nasaLayer && nasaLayer.layerRef) {
+          this.map.removeLayer(nasaLayer.layerRef);
+        }
+
+        // Crear nueva capa
+        const fireLayerGroup = L.layerGroup(fireMarkers);
+
+        // Solo añadir al mapa si la capa está visible y no está oculta
+        if (nasaLayer && nasaLayer.visible && !nasaLayer.hidden) {
+          fireLayerGroup.addTo(this.map);
+        }
+
+        // Actualizar referencia
+        if (nasaLayer) {
+          nasaLayer.layerRef = fireLayerGroup;
+        }
+
+        console.log(
+          `Cargados ${filteredIncidents.length} incendios reales de NASA para Córdoba`
+        );
+      } catch (error) {
+        console.error("Error cargando incendios reales de NASA:", error);
+        // Si falla, la capa queda vacía (sin mostrar error al usuario)
+      }
+    },
+    async createModisLayer() {
+      try {
+        // Cargar el archivo CSV de datos MODIS
+        const response = await fetch(
+          "./MODIS_C6_1_Global_MCD14DL_NRT_2025277.txt"
+        );
+        const csvText = await response.text();
+
+        // Parsear el CSV
+        const lines = csvText.trim().split("\n");
+        const headers = lines[0].split(",");
+
+        const modisPoints = [];
+
+        // Procesar cada línea del CSV (saltando el header)
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(",");
+          const point = {};
+
+          // Crear objeto con los datos del punto
+          headers.forEach((header, index) => {
+            if (
+              header === "latitude" ||
+              header === "longitude" ||
+              header === "brightness" ||
+              header === "confidence"
+            ) {
+              point[header] = parseFloat(values[index]);
+            } else {
+              point[header] = values[index];
+            }
+          });
+
+          // Filtrar solo puntos dentro de los límites de Córdoba
+          if (CORDOBA_BOUNDS.contains(point.latitude, point.longitude)) {
+            modisPoints.push(point);
+          }
+        }
+
+        const modisMarkers = [];
+
+        modisPoints.forEach((point) => {
+          // Crear círculo rojo para cada punto MODIS
+          const modisCircle = L.circle([point.latitude, point.longitude], {
+            color: "red",
+            fillColor: "#ff0000",
+            fillOpacity: 0.8,
+            radius: 500, // Radio fijo de 500 metros
+            weight: 2,
+          }).bindPopup(`
+            <div style="font-family: Arial, sans-serif; font-size: 12px;">
+              <strong>🛰️ Punto MODIS</strong><br>
+              <strong>Fecha:</strong> ${point.acq_date}<br>
+              <strong>Hora:</strong> ${point.acq_time}<br>
+              <strong>Brillo:</strong> ${point.brightness} K<br>
+              <strong>Confianza:</strong> ${point.confidence}%<br>
+              <strong>Satélite:</strong> ${point.satellite}<br>
+              <strong>Modo:</strong> ${
+                point.daynight === "D" ? "Diurno" : "Nocturno"
+              }<br>
+              <strong>FRP:</strong> ${point.frp} MW<br>
+              <strong>Coordenadas:</strong> ${point.latitude.toFixed(
+                4
+              )}, ${point.longitude.toFixed(4)}
+            </div>
+          `);
+
+          modisMarkers.push(modisCircle);
+        });
+
+        // Remover capa anterior si existe
+        const modisLayer = this.layers.find((l) => l.id === "modis-data");
+        if (modisLayer && modisLayer.layerRef) {
+          this.map.removeLayer(modisLayer.layerRef);
+        }
+
+        // Crear nueva capa
+        const modisLayerGroup = L.layerGroup(modisMarkers);
+
+        // Solo añadir al mapa si la capa está visible y no está oculta
+        if (modisLayer && modisLayer.visible && !modisLayer.hidden) {
+          modisLayerGroup.addTo(this.map);
+        }
+
+        // Actualizar referencia
+        if (modisLayer) {
+          modisLayer.layerRef = modisLayerGroup;
+        }
+
+        console.log(`Cargados ${modisPoints.length} puntos MODIS para Córdoba`);
+      } catch (error) {
+        console.error("Error cargando datos MODIS:", error);
+      }
+    },
+  },
+  watch: {
+    dateRange: {
+      handler() {
+        // Actualizar capa de incendios cuando cambie el rango de fechas
+        this.createFireIncidentsLayer();
+        this.createRealFireIncidentsLayer();
+      },
+      deep: true,
+    },
+  },
+};
 </script>
 
 <style>
 .map-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%);
-  color: white;
+  background: linear-gradient(45deg, #0042a6 0%, #07173f 100%); /* Fallback */
+  background: var(--gradient-background);
+  color: #ffffff; /* Fallback */
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
-}
-
-.map-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  position: relative;
-}
-
-.back-button {
-  position: absolute;
-  left: 2rem;
-  top: 2rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  color: white;
-  padding: 8px 16px;
-  text-decoration: none;
-  border-radius: 25px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  font-weight: bold;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.back-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.map-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-  margin: 0;
-  text-align: center;
 }
 
 .divider {
@@ -530,27 +773,12 @@ export default {
   width: 100%;
   max-width: 1200px;
   border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.1);
   position: relative;
 }
 
 @media (max-width: 768px) {
-  .map-header {
-    padding: 1.5rem;
-  }
-
-  .back-button {
-    left: 1.5rem;
-    top: 1.5rem;
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-
-  .map-title {
-    font-size: 2rem;
-  }
-
   .divider {
     margin: 0 1.5rem;
   }
@@ -580,7 +808,7 @@ export default {
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .map-sidebar.collapsed {
@@ -592,15 +820,17 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(0, 36, 107, 0.9);
   color: white;
 }
 
 .sidebar-title {
+  font-family: var(--font-heading);
+  font-weight: 700; /* Fira Sans Bold */
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
 }
 
 .sidebar-toggle {
@@ -633,7 +863,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 0.75rem;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   transition: background 0.2s ease;
 }
 
@@ -655,7 +885,7 @@ export default {
 .checkmark {
   width: 20px;
   height: 20px;
-  border: 2px solid #0369a1;
+  border: 2px solid var(--electric-blue);
   border-radius: 4px;
   display: inline-block;
   position: relative;
@@ -663,12 +893,12 @@ export default {
 }
 
 .layer-checkbox input:checked + .checkmark {
-  background: #0369a1;
-  border-color: #0369a1;
+  background: var(--electric-blue);
+  border-color: var(--electric-blue);
 }
 
 .layer-checkbox input:checked + .checkmark::after {
-  content: '✓';
+  content: "✓";
   position: absolute;
   top: -2px;
   left: 2px;
@@ -695,13 +925,17 @@ export default {
 }
 
 .layer-name {
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-weight: 700; /* Overpass Bold */
   color: #1f2937;
   margin-bottom: 0.25rem;
+  letter-spacing: 0.025em;
 }
 
 .layer-description {
-  font-size: 0.85rem;
+  font-family: var(--font-body);
+  font-weight: 400; /* Overpass Regular */
+  font-size: 0.875rem;
   color: #6b7280;
 }
 
@@ -750,7 +984,7 @@ export default {
   border-radius: 4px !important;
   padding: 8px 12px !important;
   margin-bottom: 10px !important;
-  font-family: 'Courier New', monospace !important;
+  font-family: "Courier New", monospace !important;
   font-size: 12px !important;
   font-weight: 500 !important;
   color: #000000 !important;
@@ -781,8 +1015,8 @@ export default {
 }
 
 .leaflet-control-scale-line {
-  border-color: #0369a1 !important;
-  background: rgba(3, 105, 161, 0.1) !important;
+  border-color: var(--electric-blue) !important;
+  background: rgba(0, 66, 166, 0.1) !important;
 }
 
 /* Positioning adjustments for controls */
@@ -811,290 +1045,6 @@ export default {
   .leaflet-bottom.leaflet-right {
     bottom: 15px !important;
     right: 15px !important;
-  }
-}
-
-/* NASA Fire Controls Styles */
-.time-controls {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.time-title {
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.date-control {
-  margin-bottom: 1rem;
-}
-
-.control-label {
-  display: block;
-  color: #ffffff;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.date-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #000000;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.date-input:focus {
-  outline: none;
-  border-color: #0369a1;
-  box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.2);
-}
-
-.year-control {
-  margin-bottom: 1rem;
-}
-
-.year-slider {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.2);
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.year-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #0369a1;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.year-slider::-webkit-slider-thumb:hover {
-  background: #0284c7;
-  transform: scale(1.1);
-}
-
-.year-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #0369a1;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.fire-stats {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.stats-title {
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.error-badge {
-  font-size: 0.75rem;
-  background: rgba(239, 68, 68, 0.9);
-  color: #ffffff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-weight: bold;
-  border: 1px solid rgba(239, 68, 68, 1);
-}
-
-.nasa-badge {
-  font-size: 0.75rem;
-  background: rgba(34, 197, 94, 0.8);
-  color: #ffffff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-weight: normal;
-  border: 1px solid rgba(34, 197, 94, 1);
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.stat-item:last-child {
-  border-bottom: none;
-}
-
-.stat-label {
-  color: #ffffff;
-  font-size: 0.85rem;
-  opacity: 1;
-  font-weight: 500;
-}
-
-.stat-value {
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: bold;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  min-width: 60px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.stat-value[data-empty="true"] {
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.1);
-  font-style: italic;
-  font-weight: normal;
-}
-
-/* Información de fuente de datos */
-.data-info {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.25rem 0;
-  font-size: 0.8rem;
-}
-
-.info-label {
-  color: #ffffff;
-  opacity: 0.8;
-  font-weight: 500;
-}
-
-.info-value {
-  color: #ffffff;
-  font-weight: bold;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-size: 0.75rem;
-}
-
-/* Información de error */
-.error-info {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-  border-radius: 6px;
-}
-
-.error-message {
-  color: #ffffff;
-  text-align: center;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.command {
-  background: rgba(0, 0, 0, 0.3);
-  color: #ffffff;
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
-  font-weight: bold;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.offline-banner {
-  background: rgba(239, 68, 68, 0.9);
-  color: #ffffff;
-  padding: 0.5rem;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  border: 2px solid rgba(239, 68, 68, 0.3);
-}
-
-/* Fire layer highlighting */
-.layer-item[data-fire-layer="true"] {
-  position: relative;
-}
-
-.layer-item[data-fire-layer="true"]::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 60%;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border-radius: 2px;
-  opacity: 0.8;
-}
-
-/* Responsive adjustments for fire controls */
-@media (max-width: 768px) {
-  .time-controls,
-  .fire-stats {
-    padding: 0.75rem;
-    margin-top: 0.75rem;
-  }
-
-  .time-title,
-  .stats-title {
-    font-size: 0.9rem;
-  }
-
-  .control-label {
-    font-size: 0.8rem;
-  }
-
-  .date-input {
-    font-size: 0.8rem;
-    padding: 0.4rem;
-  }
-
-  .stat-label,
-  .stat-value {
-    font-size: 0.8rem;
   }
 }
 </style>

@@ -1,4 +1,74 @@
+const config = require("../config");
+
+// Simple in-memory cache for API responses
+const apiCache = new Map();
+const CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
+
 const nasaService = {};
+
+// Cache utility functions
+const getCacheKey = (url, params = {}) => {
+  return `${url}_${JSON.stringify(params)}`;
+};
+
+const getCachedData = (key) => {
+  const cached = apiCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  if (cached) {
+    apiCache.delete(key); // Remove expired cache
+  }
+  return null;
+};
+
+const setCachedData = (key, data) => {
+  apiCache.set(key, {
+    data,
+    timestamp: Date.now(),
+  });
+};
+
+// Parse CSV data from FIRMS API
+const parseFIRMSData = (csvText) => {
+  const lines = csvText.trim().split("\n");
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(",");
+  const data = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(",");
+    if (values.length === headers.length) {
+      const row = {};
+      headers.forEach((header, index) => {
+        const cleanHeader = header.trim().toLowerCase();
+        let value = values[index].trim();
+
+        // Convert numeric fields
+        if (
+          [
+            "latitude",
+            "longitude",
+            "brightness",
+            "scan",
+            "track",
+            "confidence",
+            "bright_t31",
+            "frp",
+          ].includes(cleanHeader)
+        ) {
+          value = parseFloat(value) || 0;
+        }
+
+        row[cleanHeader] = value;
+      });
+      data.push(row);
+    }
+  }
+
+  return data;
+};
 
 // Simulated fire data for Córdoba, Argentina
 // BBOX: -66,-35,-62,-31 (aprox. límites de la provincia de Córdoba)
@@ -126,7 +196,107 @@ nasaService.getAvailableFireLayers = () => {
 };
 
 // Get detailed fire incidents (for map visualization)
-nasaService.getFireIncidents = (year, bbox) => {
+nasaService.getFireIncidents = async (year, bbox) => {
+  try {
+    // Check if NASA API key is configured
+    if (!config.external.nasa.apiKey) {
+      console.warn("NASA API key not configured, using simulated data");
+      return nasaService.getFireIncidentsSimulated(year, bbox);
+    }
+
+    // Default to Córdoba province bounds if not specified
+    const defaultBbox = "-66,-35,-62,-31";
+    const targetBbox = bbox || defaultBbox;
+
+    // Use VIIRS_NOAA20_NRT for near real-time data
+    const apiUrl = `${config.external.nasa.firmsBaseUrl}area/csv/${config.external.nasa.apiKey}/VIIRS_NOAA20_NRT/${targetBbox}/1/`;
+
+    // Check cache first
+    const cacheKey = getCacheKey(apiUrl, { year, bbox });
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      console.log("Returning cached FIRMS data");
+      return cachedData;
+    }
+
+    console.log(`Fetching FIRMS data from: ${apiUrl}`);
+
+    // Fetch data from NASA FIRMS API
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    const response = await fetch(apiUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "SpaceApps-Cordoba-FireMonitor/1.0",
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(
+        `FIRMS API error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const csvData = await response.text();
+
+    // Parse CSV data
+    const rawIncidents = parseFIRMSData(csvData);
+
+    // Transform to our internal format
+    const incidents = rawIncidents.map((row, index) => ({
+      id: `fire_${year}_${index + 1}`,
+      latitude: parseFloat(row.latitude) || 0,
+      longitude: parseFloat(row.longitude) || 0,
+      brightness: parseFloat(row.brightness) || 0,
+      scan: parseFloat(row.scan) || 0,
+      track: parseFloat(row.track) || 0,
+      acq_date: row.acq_date || new Date().toISOString().split("T")[0],
+      acq_time: row.acq_time || "0000",
+      satellite: row.satellite || "VIIRS",
+      instrument: row.instrument || "VIIRS",
+      confidence: parseInt(row.confidence) || 0,
+      version: row.version || "2.0 NRT",
+      bright_t31: parseFloat(row.bright_t31) || 0,
+      frp: parseFloat(row.frp) || 0,
+      daynight: row.daynight || "N",
+      // Additional fields for our app
+      source: "NASA_FIRMS",
+      region: "Córdoba, Argentina",
+    }));
+
+    const result = {
+      year,
+      bbox: targetBbox,
+      totalIncidents: incidents.length,
+      incidents,
+      dataSource: "NASA FIRMS (Real-time)",
+      apiUrl,
+      generatedAt: new Date().toISOString(),
+      cached: false,
+    };
+
+    // Cache the result
+    setCachedData(cacheKey, result);
+
+    console.log(
+      `Fetched ${incidents.length} real fire incidents from NASA FIRMS`
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching from NASA FIRMS API:", error.message);
+
+    // Fallback to simulated data
+    console.log("Falling back to simulated fire data");
+    return nasaService.getFireIncidentsSimulated(year, bbox);
+  }
+};
+
+// Fallback method with simulated data (renamed from original)
+nasaService.getFireIncidentsSimulated = (year, bbox) => {
   const numIncidents = Math.floor(Math.random() * 50) + 10; // 10-60 incendios
   const incidents = [];
 
@@ -156,6 +326,8 @@ nasaService.getFireIncidents = (year, bbox) => {
       bright_t31: Math.floor(Math.random() * 50) + 280, // 280-330 Kelvin
       frp: Math.random() * 50, // Fire Radiative Power
       daynight: Math.random() > 0.7 ? "D" : "N", // 30% day, 70% night
+      source: "SIMULATED",
+      region: "Córdoba, Argentina",
     });
   }
 
@@ -166,6 +338,7 @@ nasaService.getFireIncidents = (year, bbox) => {
     incidents,
     dataSource: "NASA FIRMS (Simulated)",
     generatedAt: new Date().toISOString(),
+    cached: false,
   };
 };
 

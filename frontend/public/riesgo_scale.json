@@ -1,0 +1,40 @@
+{
+  "data_type": "riesgo",
+  "title": "Mapa de Riesgo de Desastres",
+  "description": "Riesgo calculado: (flood + landslide) × 0.5 × water × (1-urban)",
+  "color_scheme": {
+    "base_color": "#E43700",
+    "color_name": "Rocket Red",
+    "gradient": "Neon Yellow (0) → Claro → Base → Oscuro (1-10, valores bajos a altos)",
+    "color_mapping": {
+      "0": "#eafe07",
+      "1": "#f9d7cc",
+      "2": "#f4b39f",
+      "3": "#ef9072",
+      "4": "#eb6c44",
+      "5": "#e64917",
+      "6": "#dc3500",
+      "7": "#cd3100",
+      "8": "#bd2d00",
+      "9": "#ae2900",
+      "10": "#9f2600",
+      "99": "#0042A6"
+    },
+    "special_values": {
+      "0": "Riesgo mínimo (mostrado como Neon Yellow #eafe07)",
+      "99": "Sin dato (mostrado como Electric Blue #0042A6)"
+    },
+    "value_range": {
+      "conceptual": "0-10 (escala completa del riesgo)",
+      "actual_data": {
+        "min": 0.0,
+        "max": 9.0
+      }
+    }
+  },
+  "dimensions": "1297x978",
+  "files": {
+    "jpeg": "riesgo.jpeg",
+    "csv": "riesgo.csv"
+  }
+}

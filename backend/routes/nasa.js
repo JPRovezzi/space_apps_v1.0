@@ -10,10 +10,16 @@ router.get("/fire-incidents", nasaController.getFireIncidents);
 
 // Info endpoint
 router.get("/", (req, res) => {
+  const config = require("../config");
+  const hasApiKey = !!config.external.nasa.apiKey;
+
   res.json({
-    message: "NASA FIRMS API (Simulated)",
-    description:
-      "Simulated NASA Fire Information for Resource Management System data",
+    message: hasApiKey
+      ? "NASA FIRMS API (Real + Simulated Fallback)"
+      : "NASA FIRMS API (Simulated)",
+    description: hasApiKey
+      ? "NASA Fire Information for Resource Management System with real-time data and simulated fallback"
+      : "Simulated NASA Fire Information for Resource Management System data",
     endpoints: {
       "fire-history": "GET /api/v1/nasa/fire-history - Historical fire data",
       "fire-stats":
@@ -22,6 +28,7 @@ router.get("/", (req, res) => {
         "GET /api/v1/nasa/fire-layers - Available fire data layers",
       "fire-incidents":
         "GET /api/v1/nasa/fire-incidents - Detailed fire incidents",
+      health: "GET /api/v1/nasa/health - API connection health check",
     },
     parameters: {
       bbox: "Bounding box (format: minLng,minLat,maxLng,maxLat)",
@@ -29,7 +36,18 @@ router.get("/", (req, res) => {
       start_year: "Start year for historical data",
       end_year: "End year for historical data",
     },
-    note: "This is simulated data. In production, integrate with real NASA FIRMS API.",
+    status: {
+      apiKeyConfigured: hasApiKey,
+      realTimeData: hasApiKey,
+      fallbackAvailable: true,
+      cacheEnabled: true,
+      cacheDuration: "30 minutes",
+    },
+    dataSources: {
+      primary: hasApiKey ? "NASA FIRMS Real-time API" : null,
+      fallback: "Simulated data",
+      bbox: "Córdoba Province: -66,-35,-62,-31",
+    },
   });
 });
 
