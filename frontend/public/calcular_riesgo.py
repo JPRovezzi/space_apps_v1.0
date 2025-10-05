@@ -1,3 +1,63 @@
+"""
+SCRIPT DE CÁLCULO DE RIESGO DE DESASTRES NATURALES - NASA SPACE APPS CHALLENGE
+===============================================================================
+
+DESCRIPCIÓN GENERAL:
+------------------
+Este script calcula el mapa de riesgo de desastres naturales (inundaciones y deslizamientos)
+para la provincia de Córdoba, Argentina, combinando múltiples factores ambientales.
+
+ARCHIVOS DE ENTRADA REQUERIDOS:
+-------------------------------
+1. flood.csv - Mapa de susceptibilidad a inundaciones (valores 0-10)
+2. landslide.csv - Mapa de susceptibilidad a deslizamientos (valores normalizados 1-10)
+3. water.csv - Mapa de cuerpos de agua (valores 0-1)
+4. urban.csv - Mapa de áreas urbanas (valores 0-1)
+5. pixeles_areas_protegidas.csv - Mapa binario de áreas protegidas (0=no protegida, 1=protegida)
+
+FÓRMULA DE CÁLCULO:
+-------------------
+Riesgo = (flood + landslide) × 0.5 × water × (1 - urban) × area_protegida
+
+EXCEPCIONES ESPECIALES:
+----------------------
+- Si flood = 0 y [water × (1-urban) × area_protegida ≠ 0], entonces Riesgo = 99 (sin dato)
+- Valores 99 se muestran en color Electric Blue (#0042A6)
+- Valores 0 se muestran en color Neon Yellow (#eafe07)
+
+ESCALA DE COLORES:
+-----------------
+- 0: Neon Yellow (riesgo mínimo)
+- 1-10: Gradiente Rocket Red (de claro a oscuro según intensidad)
+- 99: Electric Blue (sin dato)
+
+ARCHIVOS DE SALIDA GENERADOS:
+-----------------------------
+1. riesgo.csv - Matriz de riesgo calculada
+2. riesgo.jpeg - Imagen visual del mapa de riesgo
+3. riesgo_scale.json - Metadatos con información de colores y configuración
+
+CONSIDERACIONES TÉCNICAS:
+-----------------------
+- Todas las matrices deben tener las mismas dimensiones
+- Los cálculos se realizan de forma vectorizada para optimización
+- Los valores NaN se convierten a 99 (sin dato) en la visualización
+- La imagen JPEG se genera con alta calidad (95%) y resolución configurable
+
+DEPENDENCIAS:
+-------------
+- pandas: Para manejo de datos CSV
+- numpy: Para operaciones vectorizadas
+- matplotlib: Para generación de imágenes
+- json: Para exportar metadatos
+
+USO:
+----
+python calcular_riesgo.py
+
+AUTOR: NASA Space Apps Challenge - Córdoba Team
+"""
+
 import pandas as pd
 import numpy as np
 import os
@@ -21,8 +81,8 @@ def normalizar_valores(valores, rango_min=1, rango_max=10):
 
 def calcular_riesgo():
     """
-    Calcula el riesgo aplicando la fórmula: (flood + landslide_normalizado) * (1/2) * water * (1-urban)
-    Con excepción: Si water * (1-urban) != 0 y flood = 0, entonces valor = 99
+    Calcula el riesgo aplicando la fórmula: (flood + landslide_normalizado) * (1/2) * water * (1-urban) * area_protegida
+    Con excepción: Si water * (1-urban) * area_protegida != 0 y flood = 0, entonces valor = 99
 
     Los valores de flood ya están en rango correcto (0-10), landslide se normaliza al rango 1-10.
     """
@@ -35,12 +95,14 @@ def calcular_riesgo():
         landslide_df = pd.read_csv('landslide.csv', header=None)
         water_df = pd.read_csv('water.csv', header=None)
         urban_df = pd.read_csv('urban.csv', header=None)
+        area_protegida_df = pd.read_csv('pixeles_areas_protegidas.csv', header=None)
 
         print("Archivos leídos correctamente")
         print(f"Dimensiones flood: {flood_df.shape}")
         print(f"Dimensiones landslide: {landslide_df.shape}")
         print(f"Dimensiones water: {water_df.shape}")
         print(f"Dimensiones urban: {urban_df.shape}")
+        print(f"Dimensiones area_protegida: {area_protegida_df.shape}")
 
     except Exception as e:
         print(f"Error al leer los archivos CSV: {str(e)}")
@@ -51,6 +113,7 @@ def calcular_riesgo():
     landslide = landslide_df.values.astype(float)
     water = water_df.values.astype(float)
     urban = urban_df.values.astype(float)
+    area_protegida = area_protegida_df.values.astype(float)
 
     # Flood ya está en el rango correcto (0-10), normalizar landslide al rango 1-10 para poder sumarlos
     print("Flood ya está en rango correcto (0-10), normalizando landslide al rango 1-10...")
@@ -65,16 +128,50 @@ def calcular_riesgo():
     # Calcular el riesgo
     print("Calculando riesgo...")
 
+    # Verificar y ajustar dimensiones de matrices (usar la matriz más chica si hay discrepancias)
+    matrices_to_check = [
+        ('flood', flood),
+        ('landslide', landslide),
+        ('water', water),
+        ('urban', urban),
+        ('area_protegida', area_protegida)
+    ]
+
+    # Encontrar las dimensiones mínimas
+    min_rows = min(matrix.shape[0] for _, matrix in matrices_to_check)
+    min_cols = min(matrix.shape[1] for _, matrix in matrices_to_check)
+
+    print(f"Dimensiones objetivo (mínimas): {min_rows} x {min_cols}")
+
+    # Recortar todas las matrices a las dimensiones mínimas
+    for i, (name, matrix) in enumerate(matrices_to_check):
+        if matrix.shape != (min_rows, min_cols):
+            print(f"Recortando matriz '{name}' de {matrix.shape} a ({min_rows}, {min_cols})")
+            matrix = matrix[:min_rows, :min_cols]
+            # Actualizar la variable correspondiente
+            if name == 'flood':
+                flood = matrix
+            elif name == 'landslide':
+                landslide = matrix
+            elif name == 'water':
+                water = matrix
+            elif name == 'urban':
+                urban = matrix
+            elif name == 'area_protegida':
+                area_protegida = matrix
+
+    print("✓ Todas las matrices ajustadas a dimensiones consistentes")
+
     # Inicializar array de riesgo con ceros
     riesgo = np.zeros_like(flood)
 
-    # Calcular water * (1-urban)
-    notvalid_factor = water * (1 - urban)
+    # Calcular water * (1-urban) * area_protegida
+    notvalid_factor = water * (1 - urban) * area_protegida
 
     # Aplicar la fórmula principal
     riesgo = (flood + landslide) * 0.5 * notvalid_factor
 
-    # Aplicar la excepción: Si water * (1-urban) != 0 y flood = 0, entonces 99 (sin dato)
+    # Aplicar la excepción: Si water * (1-urban) * area_protegida != 0 y flood = 0, entonces 99 (sin dato)
     # (flood = 0 indica valor mínimo/nulo)
     mask_excepcion = (notvalid_factor != 0) & (flood == 0.0)
     riesgo[mask_excepcion] = 99
@@ -254,7 +351,7 @@ def crear_jpeg_riesgo(riesgo_matrix, dpi=100):
         color_scale_info = {
             'data_type': 'riesgo',
             'title': 'Mapa de Riesgo de Desastres',
-            'description': 'Riesgo calculado: (flood + landslide) × 0.5 × water × (1-urban)',
+            'description': 'Riesgo calculado: (flood + landslide) × 0.5 × water × (1-urban) × area_protegida',
             'color_scheme': {
                 'base_color': '#E43700',
                 'color_name': 'Rocket Red',

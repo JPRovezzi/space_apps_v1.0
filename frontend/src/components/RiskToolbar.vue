@@ -26,12 +26,12 @@
       </button>
 
       <!-- Zoom In -->
-      <button class="toolbar-btn" title="Acercar">
+      <button class="toolbar-btn hidden-zoom" title="Acercar">
         <span class="icon">🔍+</span>
       </button>
 
       <!-- Zoom Out -->
-      <button class="toolbar-btn" title="Alejar">
+      <button class="toolbar-btn hidden-zoom" title="Alejar">
         <span class="icon">🔍-</span>
       </button>
 
@@ -60,6 +60,19 @@
         title="Ver coordenadas"
       >
         <span class="icon">📍</span>
+      </button>
+
+      <!-- Controles del mapa -->
+      <button
+        class="toolbar-btn"
+        @click="toggleMapControls"
+        :title="
+          showMapControls
+            ? 'Ocultar controles del mapa'
+            : 'Mostrar controles del mapa'
+        "
+      >
+        <span class="icon">{{ showMapControls ? "🧭" : "🚫" }}</span>
       </button>
     </div>
 
@@ -107,13 +120,23 @@ export default {
       showLayersModal: false,
       showCoordinatesModal: false,
       showLegend: false,
+      showMapControls: true, // Mostrar controles por defecto
       layers: [
-        { name: "Inundaciones", active: false, opacity: 70 },
-        { name: "Deslizamientos", active: false, opacity: 70 },
-        { name: "Urbano", active: false, opacity: 70 },
-        { name: "Agua", active: false, opacity: 70 },
-        { name: "Expansión", active: false, opacity: 70 },
+        { name: "Peligro de inundación", active: false, opacity: 70 },
+        { name: "Procesos de remoción en masa", active: false, opacity: 70 },
+        { name: "Presencia de Urbanización", active: false, opacity: 70 },
+        {
+          name: "Cuerpos de Agua y Cursos Fluviales",
+          active: false,
+          opacity: 70,
+        },
+        {
+          name: "Probabilidad de expansión urbana",
+          active: false,
+          opacity: 70,
+        },
         { name: "Riesgo", active: false, opacity: 70 },
+        { name: "Áreas protegidas", active: false, opacity: 70 },
       ],
     };
   },
@@ -152,6 +175,11 @@ export default {
     handleLayersAccept() {
       // Cerrar el modal cuando se aceptan los cambios
       this.showLayersModal = false;
+    },
+
+    toggleMapControls() {
+      this.showMapControls = !this.showMapControls;
+      this.$emit("map-controls-toggle", this.showMapControls);
     },
   },
 };
@@ -197,6 +225,10 @@ export default {
 
 .icon {
   font-size: 1.2rem;
+}
+
+.hidden-zoom {
+  display: none;
 }
 
 @media (max-width: 768px) {

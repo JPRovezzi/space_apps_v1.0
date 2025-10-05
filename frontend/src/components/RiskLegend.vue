@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="risk-legend">
     <div class="legend-header">
-      <h4>Riesgo de Desastres</h4>
+      <h4>Índice de Riesgo</h4>
     </div>
     <div class="legend-content">
       <div
@@ -39,11 +39,11 @@ export default {
       legendItems: {
         99: {
           color: "#0042A6",
-          description: "Sin dato",
+          description: "Sin datos",
         },
         0: {
           color: "#eafe07",
-          description: "No válido",
+          description: "Área no válida",
         },
         1: {
           color: "#f9d7cc",
