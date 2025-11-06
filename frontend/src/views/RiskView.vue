@@ -65,7 +65,7 @@
           v-show="layer.active"
           class="layer-overlay"
           :style="{
-            backgroundImage: `url(/${getLayerImage(layer.name)})`,
+            backgroundImage: `url(./${getLayerImage(layer.name)})`,
             opacity: layer.opacity / 100,
           }"
         ></div>
@@ -249,14 +249,14 @@ export default {
     backgroundStyle() {
       if (this.currentBackground === "marble") {
         return {
-          backgroundImage: "url(/marble.jpg)",
+          backgroundImage: "url(./marble.jpg)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         };
       } else if (this.currentBackground === "night") {
         return {
-          backgroundImage: "url(/night.jpg)",
+          backgroundImage: "url(./night.jpg)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
