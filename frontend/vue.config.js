@@ -1,5 +1,7 @@
 const { defineConfig } = require("@vue/cli-service");
+
 module.exports = defineConfig({
+  publicPath: "/space_apps_v1.0/", // 👈 Esta línea es clave para GitHub Pages
   transpileDependencies: true,
   devServer: {
     proxy: {
