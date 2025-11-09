@@ -65,7 +65,10 @@
         />
 
         <!-- Leyenda de riesgo (por encima del contorno) -->
-        <RiskLegend :show="showRiskLegend" />
+        <RiskLegend
+          :show="showRiskLegend"
+          :style="{ '--legend-scale': legendScale }"
+        />
 
         <!-- Rosa de los vientos y escala del mapa -->
         <div v-show="showMapControls" class="map-controls">
@@ -298,6 +301,12 @@ export default {
       // Mostrar la leyenda cuando esté activada manualmente
       return this.showLegend;
     },
+
+    legendScale() {
+      // Calcular la escala de la leyenda basada en el ancho del contenedor
+      const baseScale = this.IMAGE_WIDTH / this.BASE_IMAGE_WIDTH;
+      return baseScale * 1.5; // 50% más grande para mejor legibilidad
+    },
   },
   methods: {
     handleBackgroundChange(background) {
@@ -518,7 +527,16 @@ export default {
       // Forzar recalculación de computed properties responsive
       this.$nextTick(() => {
         this.$forceUpdate();
+        this.updateLegendScale();
       });
+    },
+
+    updateLegendScale() {
+      // Actualizar la variable CSS de escala de la leyenda
+      const legendElement = this.$el.querySelector('.risk-legend');
+      if (legendElement) {
+        legendElement.style.setProperty('--legend-scale', this.legendScale);
+      }
     },
   },
   mounted() {
@@ -532,6 +550,11 @@ export default {
     // Agregar listener para cambios de tamaño de ventana
     this.handleResize = this.handleResize.bind(this);
     window.addEventListener('resize', this.handleResize);
+
+    // Inicializar escala de la leyenda
+    this.$nextTick(() => {
+      this.updateLegendScale();
+    });
   },
 
   beforeUnmount() {
@@ -697,17 +720,18 @@ export default {
 
 .risk-legend {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 1%;
+  left: 1%;
+  transform: scale(var(--legend-scale, 1));
+  transform-origin: top left;
   z-index: 200;
 }
 
 /* Responsive legend adjustments */
 @media (max-width: 768px) {
   .risk-legend {
-    top: 5px;
-    left: 5px;
-    max-width: calc(100vw - 20px);
+    top: 0.5%;
+    left: 0.5%;
   }
 }
 
