@@ -41,6 +41,7 @@
                     min="0"
                     max="100"
                     :value="layer.opacity"
+                    :title="$t('layers.opacityLevel', { percentage: layer.opacity })"
                     @input="
                       $emit('layer-opacity-change', {
                         layerId: layer.id,
@@ -49,7 +50,12 @@
                     "
                     class="opacity-slider"
                   />
-                  <span class="opacity-value">{{ layer.opacity }}%</span>
+                  <span
+                    class="opacity-value"
+                    :title="$t('layers.currentOpacity', { percentage: layer.opacity })"
+                  >
+                    {{ layer.opacity }}%
+                  </span>
                 </div>
               </td>
             </tr>
@@ -222,7 +228,8 @@ export default {
   max-width: 700px;
   width: 90%;
   max-height: 85vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -232,6 +239,7 @@ export default {
   align-items: center;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .color-modal-header h3 {
@@ -263,6 +271,9 @@ export default {
 
 .layers-modal-body {
   padding: 1rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Importante para que flex funcione correctamente */
 }
 
 .layers-table {
@@ -376,6 +387,7 @@ export default {
   padding: 1rem 1.5rem;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
 }
 
 .cancel-btn,

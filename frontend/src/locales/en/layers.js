@@ -1,7 +1,7 @@
 export default {
   title: 'Layer Management',
   name: 'Name',
-  actions: 'Actions: Enable/Disable and Opacity',
+  actions: 'Actions:',
   cancel: 'Cancel',
   accept: 'Accept',
   activate: 'Activate layer',
@@ -9,5 +9,7 @@ export default {
   sourceInfo: 'Source Information',
   source: 'Source',
   layer: 'Layer',
-  theme: 'Theme'
+  theme: 'Theme',
+  opacityLevel: 'Opacity: {percentage}%',
+  currentOpacity: 'Opacity: {percentage}%'
 }

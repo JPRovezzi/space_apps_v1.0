@@ -73,14 +73,14 @@
             placeholder="#000000"
           />
         </div>
+      </div>
 
-        <!-- Botones -->
-        <div class="modal-actions">
-          <button class="btn-secondary" @click="$emit('close')">
-            {{ $t('colorPicker.buttons.cancel') }}
-          </button>
-          <button class="btn-primary" @click="applyColor">{{ $t('colorPicker.buttons.apply') }}</button>
-        </div>
+      <!-- Botones -->
+      <div class="modal-actions">
+        <button class="btn-secondary" @click="$emit('close')">
+          {{ $t('colorPicker.buttons.cancel') }}
+        </button>
+        <button class="btn-primary" @click="applyColor">{{ $t('colorPicker.buttons.apply') }}</button>
       </div>
     </div>
   </div>
@@ -278,7 +278,8 @@ export default {
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -288,6 +289,7 @@ export default {
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .color-modal-header h3 {
@@ -319,6 +321,9 @@ export default {
 
 .color-modal-body {
   padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Importante para que flex funcione correctamente */
 }
 
 .color-wheel-container {
@@ -403,6 +408,10 @@ export default {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
+  flex-shrink: 0;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .btn-primary,

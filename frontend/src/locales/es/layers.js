@@ -1,7 +1,7 @@
 export default {
   title: 'Gestión de Capas',
   name: 'Nombre',
-  actions: 'Acciones: Activar/Desactivar y Opacidad',
+  actions: 'Acciones:',
   cancel: 'Cancelar',
   accept: 'Aceptar',
   activate: 'Activar capa',
@@ -9,5 +9,7 @@ export default {
   sourceInfo: 'Información de la fuente',
   source: 'Fuente',
   layer: 'Capa',
-  theme: 'Temática'
+  theme: 'Temática',
+  opacityLevel: 'Opacidad: {percentage}%',
+  currentOpacity: 'Opacidad: {percentage}%'
 }
