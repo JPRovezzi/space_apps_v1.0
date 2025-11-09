@@ -40,13 +40,14 @@
       >
         <!-- Capas de riesgo (sobre el fondo, debajo del contorno) -->
         <div
-          v-for="layer in layers"
+          v-for="(layer, index) in layers"
           :key="layer.id"
           v-show="layer.active"
           class="layer-overlay"
           :style="{
-            backgroundImage: `url(/space_apps_v1.0/${getLayerImage(layer.name)})`,
+            backgroundImage: `url(/space_apps_v1.0/${getLayerImage(layer.id)})`,
             opacity: layer.opacity / 100,
+            zIndex: 10 + index
           }"
         ></div>
 
@@ -291,26 +292,26 @@ export default {
       this.showLegend = show;
     },
 
-    getLayerImage(layerName) {
+    getLayerImage(layerId) {
       const imageMap = {
-        "Peligro de inundación": "flood.jpeg",
-        "Procesos de remoción en masa": "landslide.jpeg",
-        "Presencia de Urbanización": "urban.jpeg",
-        "Cuerpos de Agua y Cursos Fluviales": "water.jpeg",
-        "Probabilidad de expansión urbana": "expansion.jpeg",
-        Riesgo: "riesgo.jpeg",
-        "Áreas protegidas": "areas_protegidas_monocromatico.jpg",
+        "flood": "flood.jpeg",
+        "landslide": "landslide.jpeg",
+        "urban": "urban.jpeg",
+        "water": "water.jpeg",
+        "expansion": "expansion.jpeg",
+        "risk": "riesgo.jpeg",
+        "protected": "areas_protegidas_monocromatico.jpg",
       };
-      return imageMap[layerName] || "";
+      return imageMap[layerId] || "";
     },
 
-    calculateCoordinates(mouseX, mouseY) {
+    calculateCoordinates(mouseX, mouseY, containerWidth = this.IMAGE_WIDTH, containerHeight = this.IMAGE_HEIGHT) {
       // Convertir posición del mouse a coordenadas geográficas
       const latRange = this.MAX_LAT - this.MIN_LAT;
       const lonRange = this.MAX_LON - this.MIN_LON;
 
-      const lat = this.MAX_LAT - (mouseY / this.IMAGE_HEIGHT) * latRange;
-      const lon = this.MIN_LON + (mouseX / this.IMAGE_WIDTH) * lonRange;
+      const lat = this.MAX_LAT - (mouseY / containerHeight) * latRange;
+      const lon = this.MIN_LON + (mouseX / containerWidth) * lonRange;
 
       return { lat, lon };
     },
@@ -319,15 +320,17 @@ export default {
       const rect = event.currentTarget.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
+      const containerWidth = rect.width;
+      const containerHeight = rect.height;
 
       // Solo calcular si el mouse está dentro del contenedor
       if (
         mouseX >= 0 &&
-        mouseX <= this.IMAGE_WIDTH &&
+        mouseX <= containerWidth &&
         mouseY >= 0 &&
-        mouseY <= this.IMAGE_HEIGHT
+        mouseY <= containerHeight
       ) {
-        this.mouseCoordinates = this.calculateCoordinates(mouseX, mouseY);
+        this.mouseCoordinates = this.calculateCoordinates(mouseX, mouseY, containerWidth, containerHeight);
       }
     },
 
@@ -565,6 +568,11 @@ export default {
   text-align: center;
   position: relative;
   background: rgba(255, 255, 255, 0.02);
+  max-width: 978px;
+  max-height: 1296px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 978 / 1296;
 }
 
 .layer-overlay {
@@ -577,7 +585,6 @@ export default {
   background-position: center;
   background-repeat: no-repeat;
   pointer-events: none;
-  z-index: 1;
 }
 
 /* Risk Legend Styles */
