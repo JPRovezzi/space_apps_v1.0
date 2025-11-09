@@ -75,7 +75,8 @@ export default {
     },
     closeMobileWarning() {
       this.showMobileWarning = false;
-      // No guardar en localStorage para que aparezca cada vez que se refresque
+      // Guardar en localStorage para evitar que aparezca nuevamente
+      localStorage.setItem('mobile-warning-shown', 'true');
     },
   },
   mounted() {
@@ -128,13 +129,15 @@ export default {
 
     // Detectar dispositivo móvil y mostrar warning si es necesario
     this.$nextTick(() => {
-      if (this.isMobileDevice()) {
+      const mobileWarningShown = localStorage.getItem('mobile-warning-shown');
+
+      if (this.isMobileDevice() && !mobileWarningShown) {
         this.showMobileWarning = true;
       }
 
       // Listener para cambios de tamaño de ventana (rotación de dispositivo)
       window.addEventListener("resize", () => {
-        if (this.isMobileDevice() && !this.showMobileWarning) {
+        if (this.isMobileDevice() && !this.showMobileWarning && !mobileWarningShown) {
           this.showMobileWarning = true;
         }
       });
