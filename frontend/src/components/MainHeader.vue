@@ -11,10 +11,16 @@
       <button
         @click="toggleLanguage"
         class="header-btn language-btn"
-        :title="$t('nav.language')"
+        :title="currentLanguage.name + ' - ' + $t('nav.language')"
       >
-        <span class="language-code">{{ currentLanguageCode }}</span>
-        {{ currentLanguageFlag }}
+        <img
+          v-if="currentLanguageFlag"
+          :src="currentLanguageFlag"
+          :alt="currentLanguageCode"
+          class="language-flag"
+          @error="handleFlagError"
+        />
+        <span v-else class="language-code">{{ currentLanguageCode }}</span>
       </button>
 
       <!-- Botón de conexión NASA -->
@@ -63,13 +69,24 @@ export default {
     return {
       showConnectionPopup: false,
       connectionTimeout: null,
+      flagImagesSupported: true, // Asumir que sí al inicio
       // Idiomas disponibles - fácil de extender
       availableLanguages: [
-        { code: 'es', name: 'Español', flag: '🇪🇸' },
-        { code: 'en', name: 'English', flag: '🇺🇸' },
+        {
+          code: 'es',
+          name: 'Español',
+          flag: 'https://flagpedia.net/data/flags/w580/ar.webp',
+          emoji: '🇦🇷'
+        },
+        {
+          code: 'en',
+          name: 'English',
+          flag: 'https://flagpedia.net/data/flags/w580/gb.webp',
+          emoji: '🇬🇧'
+        },
         // Futuros idiomas:
-        // { code: 'fr', name: 'Français', flag: '🇫🇷' },
-        // { code: 'pt', name: 'Português', flag: '🇵🇹' }
+        // { code: 'fr', name: 'Français', flag: 'https://flagpedia.net/data/flags/w580/fr.webp', emoji: '🇫🇷' },
+        // { code: 'pt', name: 'Português', flag: 'https://flagpedia.net/data/flags/w580/pt.webp', emoji: '🇵🇹' }
       ]
     };
   },
@@ -81,7 +98,7 @@ export default {
       return this.currentLanguage.code.toUpperCase()
     },
     currentLanguageFlag() {
-      return this.currentLanguage.flag
+      return this.flagImagesSupported ? this.currentLanguage.flag : null
     }
   },
   methods: {
@@ -98,6 +115,11 @@ export default {
 
       // Opcional: feedback visual (puedes agregar una animación aquí)
       console.log(`🌍 Idioma cambiado a: ${this.availableLanguages[nextIndex].name}`)
+    },
+
+    handleFlagError() {
+      // Si la imagen falla, desactivar el uso de imágenes de banderas
+      this.flagImagesSupported = false;
     },
 
     handleConnectionClick() {
@@ -240,6 +262,13 @@ export default {
   font-weight: bold;
   margin-right: 2px;
   opacity: 0.9;
+}
+
+.language-flag {
+  width: 24px;
+  height: 18px;
+  border-radius: 2px;
+  object-fit: cover;
 }
 
 /* Popups */
