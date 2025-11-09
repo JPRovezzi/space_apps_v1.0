@@ -27,6 +27,14 @@ export default {
       colors: COLORS,
     };
   },
+  mounted() {
+    // Scroll to top when component is loaded
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    });
+  },
 };
 </script>
 

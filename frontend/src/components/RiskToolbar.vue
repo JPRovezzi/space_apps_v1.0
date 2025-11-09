@@ -239,6 +239,8 @@ export default {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 1rem;
   padding: 1rem;
@@ -274,12 +276,37 @@ export default {
 
 @media (max-width: 768px) {
   .toolbar-container {
-    gap: 0.75rem;
+    gap: 0.5rem;
     padding: 0.75rem;
+    max-width: 100%;
   }
 
   .toolbar-btn {
-    padding: 10px 14px;
+    padding: 10px 12px;
+    font-size: 1rem;
+    min-width: 44px; /* Tamaño mínimo accesible */
+    flex: 0 0 auto; /* No crecen, mantienen tamaño */
+  }
+
+  .icon {
+    font-size: 1.1rem;
+  }
+}
+
+/* Optimización adicional para móviles muy pequeños */
+@media (max-width: 480px) {
+  .toolbar-container {
+    gap: 0.4rem;
+    padding: 0.5rem;
+  }
+
+  .toolbar-btn {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    min-width: 40px;
+  }
+
+  .icon {
     font-size: 1rem;
   }
 }

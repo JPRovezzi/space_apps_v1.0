@@ -10,38 +10,23 @@
     <router-view />
 
     <!-- Modal de dispositivo móvil no soportado -->
-    <div
-      v-if="showMobileWarning"
-      class="mobile-warning-modal"
-      @click.self="closeMobileWarning"
-    >
-      <div class="mobile-warning-content">
-        <div class="mobile-warning-header">
-          <span class="mobile-icon">📱</span>
-          <h3>{{ $t('mobile.title') }}</h3>
-        </div>
-        <div class="mobile-warning-body">
-          <p>{{ $t('mobile.message') }}</p>
-          <p>{{ $t('mobile.message2') }}</p>
-        </div>
-        <div class="mobile-warning-footer">
-          <button @click="closeMobileWarning" class="mobile-warning-btn">
-            {{ $t('mobile.button') }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <MobileWarningModal
+      :show="showMobileWarning"
+      @close="closeMobileWarning"
+    />
   </div>
 </template>
 
 <script>
 import MainHeader from "@/components/MainHeader.vue";
+import MobileWarningModal from "@/components/MobileWarningModal.vue";
 import { COLORS } from "@/constants/colors.js";
 
 export default {
   name: "App",
   components: {
     MainHeader,
+    MobileWarningModal,
   },
   data() {
     return {
@@ -222,153 +207,4 @@ body {
   background: var(--gradient-background);
 }
 
-/* Modal de advertencia para dispositivos móviles */
-.mobile-warning-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.mobile-warning-content {
-  background: var(--deep-blue);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  max-width: 90vw;
-  max-height: 80vh;
-  width: 400px;
-  padding: 0;
-  overflow: hidden;
-  animation: slideIn 0.4s ease-out;
-}
-
-.mobile-warning-header {
-  background: var(--gradient-primary);
-  color: white;
-  padding: 1.5rem;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.mobile-warning-header h3 {
-  font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0.5rem 0 0 0;
-  letter-spacing: -0.025em;
-}
-
-.mobile-icon {
-  font-size: 2rem;
-  display: block;
-}
-
-.mobile-warning-body {
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.mobile-warning-body p {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text-primary);
-  margin: 0 0 1rem 0;
-  text-align: center;
-}
-
-.mobile-warning-body p:last-child {
-  margin-bottom: 0;
-}
-
-.mobile-warning-footer {
-  padding: 1rem 1.5rem 1.5rem 1.5rem;
-  background: rgba(255, 255, 255, 0.01);
-  text-align: center;
-}
-
-.mobile-warning-btn {
-  background: var(--gradient-primary);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 25px;
-  padding: 0.75rem 2rem;
-  font-family: var(--font-heading);
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.025em;
-}
-
-.mobile-warning-btn:hover {
-  background: var(--gradient-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Responsive para el modal */
-@media (max-width: 480px) {
-  .mobile-warning-content {
-    width: 95vw;
-    margin: 1rem;
-  }
-
-  .mobile-warning-header {
-    padding: 1rem;
-  }
-
-  .mobile-warning-header h3 {
-    font-size: 1.1rem;
-  }
-
-  .mobile-warning-body {
-    padding: 1rem;
-  }
-
-  .mobile-warning-body p {
-    font-size: 0.9rem;
-  }
-
-  .mobile-warning-footer {
-    padding: 0.75rem 1rem 1rem 1rem;
-  }
-
-  .mobile-warning-btn {
-    padding: 0.6rem 1.5rem;
-    font-size: 0.9rem;
-  }
-}
 </style>

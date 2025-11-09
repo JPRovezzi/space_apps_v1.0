@@ -1,12 +1,58 @@
 <template>
   <header class="map-header">
-    <router-link v-if="showBackButton" :to="backRoute" class="back-button">
-      ← {{ $t('nav.back') }}
-    </router-link>
-    <h1 v-if="showTitle" class="map-title">{{ title }}</h1>
+    <!-- Layout móvil: fila única con botones -->
+    <div v-if="isMobile" class="mobile-header-row">
+      <div class="mobile-left-section">
+        <router-link v-if="showBackButton" :to="backRoute" class="mobile-back-button">
+          ← {{ $t('nav.back') }}
+        </router-link>
+      </div>
 
-    <!-- Botones del header derecho -->
-    <div v-if="showHeaderButtons" class="header-buttons">
+      <div class="mobile-right-section">
+        <!-- Botones del header derecho -->
+        <div v-if="showHeaderButtons" class="mobile-header-buttons">
+          <!-- Botón de idioma -->
+          <button
+            @click="toggleLanguage"
+            class="header-btn language-btn"
+            :title="currentLanguage.name + ' - ' + $t('nav.language')"
+          >
+            <img
+              v-if="currentLanguageFlag"
+              :src="currentLanguageFlag"
+              :alt="currentLanguageCode"
+              class="language-flag"
+              @error="handleFlagError"
+            />
+            <span v-else class="language-code">{{ currentLanguageCode }}</span>
+          </button>
+
+          <!-- Botón de conexión NASA -->
+          <button
+            @click="handleConnectionClick"
+            class="header-btn connection-btn"
+            :title="$t('nav.connection')"
+          >
+            🛰️<span class="connection-dot"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Título en contenedor separado para móviles -->
+    <div v-if="showTitle && isMobile" class="mobile-title-container">
+      <h1 class="mobile-map-title">{{ title }}</h1>
+    </div>
+
+    <!-- Layout desktop: título centrado con elementos absolutos -->
+    <div v-if="!isMobile" class="desktop-header-layout">
+      <router-link v-if="showBackButton" :to="backRoute" class="back-button">
+        ← {{ $t('nav.back') }}
+      </router-link>
+      <h1 v-if="showTitle" class="map-title">{{ title }}</h1>
+
+      <!-- Botones del header derecho -->
+      <div v-if="showHeaderButtons" class="header-buttons">
       <!-- Botón de idioma -->
       <button
         @click="toggleLanguage"
@@ -31,6 +77,7 @@
       >
         🛰️<span class="connection-dot"></span>
       </button>
+      </div>
     </div>
 
     <!-- Popups -->
@@ -91,6 +138,9 @@ export default {
     };
   },
   computed: {
+    isMobile() {
+      return window.innerWidth <= 768
+    },
     currentLanguage() {
       return this.availableLanguages.find(lang => lang.code === this.$i18n.locale) || this.availableLanguages[0]
     },
@@ -144,12 +194,86 @@ export default {
 
 <style scoped>
 .map-header {
+  position: relative;
+  min-height: 60px;
+}
+
+/* Layout desktop */
+.desktop-header-layout {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  position: relative;
-  min-height: 60px;
+}
+
+/* Contenedor de título móvil */
+.mobile-title-container {
+  padding: 1rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mobile-map-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 900;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 0;
+  text-align: center;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+/* Layout móvil - fila única */
+.mobile-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mobile-left-section {
+  display: flex;
+  align-items: center;
+}
+
+.mobile-right-section {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.mobile-back-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-back-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.mobile-header-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .back-button {
@@ -192,20 +316,24 @@ export default {
   z-index: 1;
 }
 
-@media (max-width: 768px) {
-  .map-header {
+/* Desktop responsive */
+@media (max-width: 1024px) {
+  .desktop-header-layout {
     padding: 1.5rem;
   }
 
   .back-button {
     left: 1.5rem;
     top: 1.5rem;
-    padding: 6px 12px;
-    font-size: 0.8rem;
   }
 
   .map-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
+  }
+
+  .header-buttons {
+    right: 1.5rem;
+    top: 1.5rem;
   }
 }
 
@@ -310,36 +438,111 @@ export default {
   }
 }
 
-/* Responsive */
+/* Mobile layout activation */
 @media (max-width: 768px) {
-  .header-buttons {
-    right: 1.5rem;
-    top: 1.5rem;
-    gap: 0.5rem;
+  .desktop-header-layout {
+    display: none;
   }
 
-  .header-btn {
-    width: 35px;
-    height: 35px;
-    font-size: 1rem;
+  .mobile-title-container,
+  .mobile-header-layout {
+    display: block;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .mobile-map-title {
+    font-size: 1.6rem;
+  }
+
+  .mobile-header-layout {
+    padding: 0.75rem 1rem;
+  }
+
+  .mobile-back-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .mobile-header-buttons .header-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
   }
 
   .connection-dot {
-    width: 6px;
-    height: 6px;
-    top: 5px;
-    right: 5px;
+    width: 5px;
+    height: 5px;
+    top: 4px;
+    right: 4px;
   }
 
   .popup {
-    top: 50px;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
     font-size: 0.8rem;
     padding: 0.5rem 0.75rem;
     max-width: 200px;
   }
 
   .language-popup {
-    right: 60px;
+    right: 40px;
+  }
+
+  .connection-popup {
+    right: 0;
+  }
+}
+
+/* Very small mobile optimizations */
+@media (max-width: 480px) {
+  .mobile-title-container {
+    padding: 0.75rem 1rem 0.25rem 1rem;
+  }
+
+  .mobile-map-title {
+    font-size: 1.4rem;
+    line-height: 1.2;
+  }
+
+  .mobile-header-layout {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .mobile-back-button {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  .mobile-header-buttons .header-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+
+  .mobile-header-buttons .language-flag {
+    width: 18px;
+    height: 14px;
+  }
+
+  .connection-dot {
+    width: 4px;
+    height: 4px;
+    top: 3px;
+    right: 3px;
+  }
+
+  .popup {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    max-width: 180px;
+  }
+
+  .language-popup {
+    right: 35px;
   }
 }
 </style>

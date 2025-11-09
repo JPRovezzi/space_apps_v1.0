@@ -468,6 +468,14 @@ export default {
       }
     },
   },
+  mounted() {
+    // Scroll to top when component is loaded
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    });
+  },
 };
 </script>
 
@@ -557,6 +565,21 @@ export default {
   min-height: calc(100vh - 120px); /* Ajustar según el header */
 }
 
+/* Responsive adjustments for content container */
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
+    min-height: calc(100vh - 100px);
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 0.5rem;
+    min-height: calc(100vh - 80px);
+  }
+}
+
 .image-container {
   border: 2px dashed rgba(255, 255, 255, 0.3);
   border-radius: 8px;
@@ -573,6 +596,24 @@ export default {
   width: 100%;
   height: auto;
   aspect-ratio: 978 / 1296;
+}
+
+/* Responsive adjustments for image container */
+@media (max-width: 768px) {
+  .image-container {
+    max-width: 100%;
+    max-height: calc(100vh - 150px);
+    aspect-ratio: 4 / 5; /* Más cuadrado para tablets */
+  }
+}
+
+@media (max-width: 480px) {
+  .image-container {
+    max-width: 100%;
+    max-height: calc(100vh - 120px);
+    aspect-ratio: 3 / 4; /* Aún más cuadrado para móviles */
+    border-radius: 6px;
+  }
 }
 
 .layer-overlay {
@@ -637,9 +678,9 @@ export default {
   }
 
   .info-text-container {
-    margin: 1rem 1rem 0 auto;
+    margin: 0.5rem 1rem 0 auto;
     width: fit-content;
-    min-width: 160px;
+    min-width: 140px;
     margin-right: 1rem;
   }
 
@@ -681,6 +722,23 @@ export default {
   .info-content p a:hover {
     color: var(--neon-yellow);
     text-decoration-color: var(--neon-yellow);
+  }
+}
+
+/* Additional mobile optimizations for very small screens */
+@media (max-width: 480px) {
+  .info-text-container {
+    margin: 0.25rem 0.5rem 0 auto;
+    width: fit-content;
+    min-width: 120px;
+    margin-right: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+
+  .info-text-container.expanded {
+    width: calc(100vw - 1rem);
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
   }
 }
 
@@ -810,6 +868,33 @@ export default {
 
   .scale-text {
     font-size: 10px;
+  }
+}
+
+/* Additional optimizations for very small screens */
+@media (max-width: 480px) {
+  .map-controls {
+    bottom: 10px;
+    right: 10px;
+    gap: 8px;
+  }
+
+  .compass-rose {
+    padding: 4px;
+  }
+
+  .compass-rose svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .scale-bar {
+    padding: 4px 8px;
+    min-width: 80px;
+  }
+
+  .scale-text {
+    font-size: 9px;
   }
 }
 </style>
