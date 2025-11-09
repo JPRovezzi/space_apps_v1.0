@@ -417,21 +417,21 @@ export default {
 }
 
 .btn-primary {
-  background: #007bff;
-  color: white;
+  background: var(--electric-blue);
+  color: var(--text-on-primary);
 }
 
 .btn-primary:hover {
-  background: #0056b3;
+  background: var(--deep-blue);
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
+  background: var(--blue-yonder);
+  color: var(--text-on-primary);
 }
 
 .btn-secondary:hover {
-  background: #545b62;
+  background: var(--neon-blue);
 }
 
 @media (max-width: 768px) {

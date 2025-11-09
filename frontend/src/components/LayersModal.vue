@@ -257,8 +257,8 @@ export default {
 }
 
 .close-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
+  background: var(--background-overlay-hover);
+  color: var(--text-primary);
 }
 
 .layers-modal-body {
@@ -310,7 +310,7 @@ export default {
 }
 
 .play-pause-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--background-overlay-hover);
 }
 
 .opacity-control {
@@ -335,7 +335,7 @@ export default {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #007bff;
+  background: var(--electric-blue);
   cursor: pointer;
 }
 
@@ -343,7 +343,7 @@ export default {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #007bff;
+  background: var(--electric-blue);
   cursor: pointer;
   border: none;
 }
@@ -380,44 +380,42 @@ export default {
 
 .cancel-btn,
 .accept-btn {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
   border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: none;
 }
 
 .cancel-btn {
-  background: rgba(108, 117, 125, 0.1);
-  color: #6c757d;
-  border: 1px solid rgba(108, 117, 125, 0.3);
+  background: var(--blue-yonder);
+  color: var(--text-on-primary);
 }
 
 .cancel-btn:hover {
-  background: rgba(108, 117, 125, 0.2);
+  background: var(--neon-blue);
 }
 
 .accept-btn {
-  background: #0042a6;
-  color: white;
+  background: var(--electric-blue);
+  color: var(--text-on-primary);
 }
 
 .accept-btn:hover {
-  background: #003080;
+  background: var(--deep-blue);
   transform: translateY(-1px);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .modal-footer {
     padding: 0.75rem 1rem;
   }
 
   .cancel-btn,
   .accept-btn {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    width: 100%;
   }
 }
 
@@ -429,7 +427,7 @@ export default {
 }
 
 .layer-name-link:hover {
-  color: #0042a6;
+  color: var(--electric-blue);
 }
 
 /* Source Popup Styles */
@@ -490,8 +488,8 @@ export default {
 }
 
 .source-popup-close:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
+  background: var(--background-overlay-hover);
+  color: var(--text-primary);
 }
 
 .source-popup-body {
