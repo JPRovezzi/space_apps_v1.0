@@ -5,36 +5,16 @@
       <button
         @click="toggleInfoText"
         class="info-toggle-btn"
-        :title="showInfoText ? 'Ocultar información' : 'Mostrar información'"
+        :title="showInfoText ? $t('risk.info.hide') : $t('risk.info.show')"
       >
         <span class="icon">{{ showInfoText ? "📖" : "ℹ️" }}</span>
         <span class="text">{{
-          showInfoText ? "Ocultar información" : "Mostrar información"
+          showInfoText ? $t('risk.info.hide') : $t('risk.info.show')
         }}</span>
       </button>
 
       <div v-show="showInfoText" class="info-content">
-        <p>
-          Esta es una herramienta interactiva en desarrollo. Usted podrá
-          visualizar distintas capas de información, extraídas de servicios
-          geosatelitales de la NASA (<a
-            href="https://worldview.earthdata.nasa.gov/"
-            target="_blank"
-            rel="noopener noreferrer"
-            >https://worldview.earthdata.nasa.gov/</a
-          >) y del IGN de Argentina (<a
-            href="https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG"
-            target="_blank"
-            rel="noopener noreferrer"
-            >https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG</a
-          >). Algunas de estas capas se operan matemáticamente según una fórmula
-          de Índice de Riesgo propuesta, para obtener un mapa resultante de
-          Índice de Riesgo, a partir del cual se pueden identificar áreas
-          favorables o no para la expansión urbana. Este mapa tiene una escala
-          del 1 al 10, o valores nulos en áreas donde no puede urbanizarse por
-          la presencia de Áreas Protegidas, urbanizaciones preexistentes o
-          cuerpos de agua y cursos fluviales.
-        </p>
+        <p v-html="$t('risk.info.text')"></p>
       </div>
     </div>
 
@@ -188,41 +168,35 @@ export default {
       showLegend: false, // Controla la visibilidad de la leyenda
       showCoordinates: false, // Controla la visibilidad de las coordenadas
       mouseCoordinates: { lat: 0, lon: 0 }, // Coordenadas actuales del mouse
-      layers: [
+      layersBase: [
         {
           id: "flood",
-          name: "Peligro de inundación",
           active: false,
           opacity: 70,
         },
         {
           id: "landslide",
-          name: "Procesos de remoción en masa",
           active: false,
           opacity: 70,
         },
         {
           id: "protected",
-          name: "Áreas protegidas",
           active: false,
           opacity: 70,
         },
         {
           id: "urban",
-          name: "Presencia de Urbanización",
           active: false,
           opacity: 70,
         },
         {
           id: "water",
-          name: "Cuerpos de Agua y Cursos Fluviales",
           active: false,
           opacity: 70,
         },
-        { id: "risk", name: "Riesgo", active: false, opacity: 70 },
+        { id: "risk", active: false, opacity: 70 },
         {
           id: "expansion",
-          name: "Probabilidad de expansión urbana",
           active: false,
           opacity: 70,
         },
@@ -232,6 +206,14 @@ export default {
     };
   },
   computed: {
+    // Capas con nombres traducidos
+    layers() {
+      return this.layersBase.map(layer => ({
+        ...layer,
+        name: this.$t(`layerNames.${layer.id}`)
+      }));
+    },
+
     // Constantes geográficas para cálculos futuros
     MAX_LAT() {
       return CORDOBA_BOUNDS.MAX_LAT;
@@ -470,7 +452,7 @@ export default {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = "mapa-captura.png";
+          a.download = this.$t('risk.download.filename');
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
@@ -563,18 +545,6 @@ export default {
   max-width: none;
 }
 
-.info-content p a {
-  color: var(--text-primary);
-  text-decoration: underline;
-  text-decoration-color: var(--neon-yellow);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-.info-content p a:hover {
-  color: var(--neon-yellow);
-  text-decoration-color: var(--neon-yellow);
-}
 
 .content {
   padding: 2rem;

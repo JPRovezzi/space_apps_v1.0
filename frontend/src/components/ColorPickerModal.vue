@@ -2,7 +2,7 @@
   <div v-if="show" class="color-modal-overlay" @click="$emit('close')">
     <div class="color-modal" @click.stop>
       <div class="color-modal-header">
-        <h3>Seleccionar Color de Fondo</h3>
+        <h3>{{ $t('colorPicker.title') }}</h3>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
 
@@ -32,7 +32,7 @@
         <!-- Inputs RGB -->
         <div class="color-inputs">
           <div class="input-group">
-            <label>R:</label>
+            <label>{{ $t('colorPicker.labels.r') }}</label>
             <input
               type="number"
               min="0"
@@ -42,7 +42,7 @@
             />
           </div>
           <div class="input-group">
-            <label>G:</label>
+            <label>{{ $t('colorPicker.labels.g') }}</label>
             <input
               type="number"
               min="0"
@@ -52,7 +52,7 @@
             />
           </div>
           <div class="input-group">
-            <label>B:</label>
+            <label>{{ $t('colorPicker.labels.b') }}</label>
             <input
               type="number"
               min="0"
@@ -65,7 +65,7 @@
 
         <!-- Input HEX -->
         <div class="hex-input">
-          <label>HEX:</label>
+          <label>{{ $t('colorPicker.labels.hex') }}</label>
           <input
             type="text"
             v-model="hexColor"
@@ -77,9 +77,9 @@
         <!-- Botones -->
         <div class="modal-actions">
           <button class="btn-secondary" @click="$emit('close')">
-            Cancelar
+            {{ $t('colorPicker.buttons.cancel') }}
           </button>
-          <button class="btn-primary" @click="applyColor">Aplicar</button>
+          <button class="btn-primary" @click="applyColor">{{ $t('colorPicker.buttons.apply') }}</button>
         </div>
       </div>
     </div>

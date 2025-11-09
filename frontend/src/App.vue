@@ -18,22 +18,15 @@
       <div class="mobile-warning-content">
         <div class="mobile-warning-header">
           <span class="mobile-icon">📱</span>
-          <h3>Modo Móvil No Soportado</h3>
+          <h3>{{ $t('mobile.title') }}</h3>
         </div>
         <div class="mobile-warning-body">
-          <p>
-            Actualmente, la aplicación Astrochingolo está optimizada únicamente
-            para dispositivos de escritorio. La versión móvil se encuentra en
-            desarrollo.
-          </p>
-          <p>
-            Para una mejor experiencia, te recomendamos acceder desde una
-            computadora o dispositivo con pantalla más grande.
-          </p>
+          <p>{{ $t('mobile.message') }}</p>
+          <p>{{ $t('mobile.message2') }}</p>
         </div>
         <div class="mobile-warning-footer">
           <button @click="closeMobileWarning" class="mobile-warning-btn">
-            Entendido
+            {{ $t('mobile.button') }}
           </button>
         </div>
       </div>
@@ -60,7 +53,7 @@ export default {
     headerTitle() {
       switch (this.$route.path) {
         case "/risk":
-          return "Mapa de riesgos";
+          return this.$t('app.riskMap');
         default:
           return "";
       }

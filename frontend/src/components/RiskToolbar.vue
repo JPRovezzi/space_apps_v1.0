@@ -7,8 +7,8 @@
         @click="toggleBackground"
         :title="
           currentBackground === 'marble'
-            ? 'Cambiar a modo nocturno'
-            : 'Cambiar a modo diurno'
+            ? $t('toolbar.background.toNight')
+            : $t('toolbar.background.toDay')
         "
       >
         <span class="icon">{{
@@ -20,18 +20,18 @@
       <button
         class="toolbar-btn"
         @click="showColorPicker = true"
-        title="Seleccionar color de fondo"
+        :title="$t('toolbar.colorPicker')"
       >
         <span class="icon">🎨</span>
       </button>
 
       <!-- Zoom In -->
-      <button class="toolbar-btn hidden-zoom" title="Acercar">
+      <button class="toolbar-btn hidden-zoom" :title="$t('toolbar.zoom.in')">
         <span class="icon">🔍+</span>
       </button>
 
       <!-- Zoom Out -->
-      <button class="toolbar-btn hidden-zoom" title="Alejar">
+      <button class="toolbar-btn hidden-zoom" :title="$t('toolbar.zoom.out')">
         <span class="icon">🔍-</span>
       </button>
 
@@ -39,7 +39,7 @@
       <button
         class="toolbar-btn"
         @click="showLayersModal = true"
-        title="Gestionar capas"
+        :title="$t('toolbar.layers')"
       >
         <span class="icon">📚</span>
       </button>
@@ -48,7 +48,7 @@
       <button
         class="toolbar-btn"
         @click="toggleLegend"
-        :title="showLegend ? 'Ocultar leyenda' : 'Mostrar leyenda'"
+        :title="showLegend ? $t('toolbar.legend.hide') : $t('toolbar.legend.show')"
       >
         <span class="icon">📊</span>
       </button>
@@ -57,7 +57,7 @@
       <button
         class="toolbar-btn"
         @click="showCoordinatesModal = true"
-        title="Ver coordenadas"
+        :title="$t('toolbar.coordinates')"
       >
         <span class="icon">📍</span>
       </button>
@@ -68,8 +68,8 @@
         @click="toggleMapControls"
         :title="
           showMapControls
-            ? 'Ocultar controles del mapa'
-            : 'Mostrar controles del mapa'
+            ? $t('toolbar.mapControls.hide')
+            : $t('toolbar.mapControls.show')
         "
       >
         <span class="icon">{{ showMapControls ? "🧭" : "🚫" }}</span>
@@ -79,7 +79,7 @@
       <button
         class="toolbar-btn"
         @click="downloadSnapshot"
-        title="Descargar captura del mapa"
+        :title="$t('toolbar.download')"
       >
         <span class="icon">📥</span>
       </button>

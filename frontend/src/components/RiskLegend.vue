@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="risk-legend">
     <div class="legend-header">
-      <h4>Índice de Riesgo</h4>
+      <h4>{{ $t('legend.title') }}</h4>
     </div>
     <div class="legend-content">
       <div
@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="legend-footer">
-      <small>Escala: 1-10 (valores bajos a altos)</small>
+      <small>{{ $t('legend.footer') }}</small>
     </div>
   </div>
 </template>
@@ -36,14 +36,14 @@ export default {
   },
   data() {
     return {
-      legendItems: {
+      legendItemsBase: {
         99: {
           color: "#0042A6",
-          description: "Sin datos",
+          descriptionKey: "noData",
         },
         0: {
           color: "#eafe07",
-          description: "Área no válida",
+          descriptionKey: "invalidArea",
         },
         1: {
           color: "#f9d7cc",
@@ -89,6 +89,21 @@ export default {
     };
   },
   computed: {
+    legendItems() {
+      // Crear los legendItems con traducciones aplicadas
+      const items = {};
+      Object.keys(this.legendItemsBase).forEach(key => {
+        const item = this.legendItemsBase[key];
+        items[key] = {
+          ...item,
+          description: item.descriptionKey
+            ? this.$t(`legend.items.${item.descriptionKey}`)
+            : item.description
+        };
+      });
+      return items;
+    },
+
     orderedLegendItems() {
       // Orden personalizado: 1-10, luego No válido (0), luego Sin dato (99)
       const order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 99];

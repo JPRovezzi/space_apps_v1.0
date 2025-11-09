@@ -1,19 +1,17 @@
 <template>
   <div class="home">
     <div class="hero">
-      <h1 class="title">Astrochingolo</h1>
-      <p class="subtitle">
-        Análisis de riesgos para ciudades del hoy y del mañana
-      </p>
+      <h1 class="title">{{ $t('home.title') }}</h1>
+      <p class="subtitle">{{ $t('home.subtitle') }}</p>
     </div>
 
     <div class="visualization-container">
       <div class="shared-background">
         <div class="feature-card">
-          <h3>📊 Índice de Riesgo</h3>
-          <p>Mapa interactivo</p>
+          <h3>{{ $t('home.riskIndex') }}</h3>
+          <p>{{ $t('home.mapDescription') }}</p>
         </div>
-        <router-link to="/risk" class="btn-map"> 🗺️ Ver Mapa </router-link>
+        <router-link to="/risk" class="btn-map">{{ $t('home.viewMap') }}</router-link>
       </div>
     </div>
   </div>

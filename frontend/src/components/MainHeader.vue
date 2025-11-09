@@ -1,7 +1,7 @@
 <template>
   <header class="map-header">
     <router-link v-if="showBackButton" :to="backRoute" class="back-button">
-      ← Volver
+      ← {{ $t('nav.back') }}
     </router-link>
     <h1 v-if="showTitle" class="map-title">{{ title }}</h1>
 
@@ -9,31 +9,27 @@
     <div v-if="showHeaderButtons" class="header-buttons">
       <!-- Botón de idioma -->
       <button
-        @click="handleLanguageClick"
+        @click="toggleLanguage"
         class="header-btn language-btn"
-        title="Cambiar idioma"
+        :title="$t('nav.language')"
       >
-        🇪🇸
+        <span class="language-code">{{ currentLanguageCode }}</span>
+        {{ currentLanguageFlag }}
       </button>
 
       <!-- Botón de conexión NASA -->
       <button
         @click="handleConnectionClick"
         class="header-btn connection-btn"
-        title="Estado de conexión"
+        :title="$t('nav.connection')"
       >
         🛰️<span class="connection-dot"></span>
       </button>
     </div>
 
     <!-- Popups -->
-    <div v-show="showLanguagePopup" class="popup language-popup">
-      Cambiar idioma: por el momento el sitio se encuentra solo disponible en
-      español.
-    </div>
-
     <div v-show="showConnectionPopup" class="popup connection-popup">
-      Conexión con API de la NASA: En desarrollo
+      {{ $t('nav.connectionMessage') }}
     </div>
   </header>
 </template>
@@ -65,21 +61,43 @@ export default {
   },
   data() {
     return {
-      showLanguagePopup: false,
       showConnectionPopup: false,
-      languageTimeout: null,
       connectionTimeout: null,
+      // Idiomas disponibles - fácil de extender
+      availableLanguages: [
+        { code: 'es', name: 'Español', flag: '🇪🇸' },
+        { code: 'en', name: 'English', flag: '🇺🇸' },
+        // Futuros idiomas:
+        // { code: 'fr', name: 'Français', flag: '🇫🇷' },
+        // { code: 'pt', name: 'Português', flag: '🇵🇹' }
+      ]
     };
   },
+  computed: {
+    currentLanguage() {
+      return this.availableLanguages.find(lang => lang.code === this.$i18n.locale) || this.availableLanguages[0]
+    },
+    currentLanguageCode() {
+      return this.currentLanguage.code.toUpperCase()
+    },
+    currentLanguageFlag() {
+      return this.currentLanguage.flag
+    }
+  },
   methods: {
-    handleLanguageClick() {
-      this.showLanguagePopup = true;
-      if (this.languageTimeout) {
-        clearTimeout(this.languageTimeout);
-      }
-      this.languageTimeout = setTimeout(() => {
-        this.showLanguagePopup = false;
-      }, 3000); // 3 segundos
+    toggleLanguage() {
+      const currentIndex = this.availableLanguages.findIndex(lang => lang.code === this.$i18n.locale)
+      const nextIndex = (currentIndex + 1) % this.availableLanguages.length
+      const newLocale = this.availableLanguages[nextIndex].code
+
+      // Cambiar el idioma
+      this.$i18n.locale = newLocale
+
+      // Guardar en localStorage para persistencia
+      localStorage.setItem('user-language', newLocale)
+
+      // Opcional: feedback visual (puedes agregar una animación aquí)
+      console.log(`🌍 Idioma cambiado a: ${this.availableLanguages[nextIndex].name}`)
     },
 
     handleConnectionClick() {
@@ -95,9 +113,6 @@ export default {
 
   beforeUnmount() {
     // Limpiar timeouts cuando el componente se destruya
-    if (this.languageTimeout) {
-      clearTimeout(this.languageTimeout);
-    }
     if (this.connectionTimeout) {
       clearTimeout(this.connectionTimeout);
     }
@@ -218,6 +233,13 @@ export default {
   border-radius: 50%;
   border: 1px solid white;
   box-shadow: 0 0 4px rgba(255, 0, 0, 0.6);
+}
+
+.language-code {
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-right: 2px;
+  opacity: 0.9;
 }
 
 /* Popups */

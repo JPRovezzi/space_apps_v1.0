@@ -2,7 +2,7 @@
   <div v-if="show" class="color-modal-overlay" @click="$emit('close')">
     <div class="color-modal layers-modal" @click.stop>
       <div class="color-modal-header">
-        <h3>Gestión de Capas</h3>
+        <h3>{{ $t('layers.title') }}</h3>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
 
@@ -10,8 +10,8 @@
         <table class="layers-table">
           <thead>
             <tr>
-              <th>Nombre</th>
-              <th>Acciones: Activar/Desactivar y Opacidad</th>
+              <th>{{ $t('layers.name') }}</th>
+              <th>{{ $t('layers.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -19,9 +19,9 @@
               <td class="layer-name">
                 <span
                   class="layer-name-link"
-                  @click="openSourcePopup(layer.name)"
+                  @click="openSourcePopup(layer.id)"
                 >
-                  {{ layer.name }}
+                  {{ getTranslatedLayerName(layer.id) }}
                 </span>
               </td>
               <td class="layer-actions">
@@ -29,7 +29,7 @@
                 <button
                   class="play-pause-btn"
                   @click="$emit('layer-toggle', layer.id)"
-                  :title="layer.active ? 'Desactivar capa' : 'Activar capa'"
+                  :title="layer.active ? $t('layers.deactivate') : $t('layers.activate')"
                 >
                   {{ layer.active ? "⏸️" : "▶️" }}
                 </button>
@@ -59,8 +59,8 @@
 
       <!-- Modal Footer -->
       <div class="modal-footer">
-        <button class="cancel-btn" @click="$emit('close')">Cancelar</button>
-        <button class="accept-btn" @click="$emit('accept')">Aceptar</button>
+        <button class="cancel-btn" @click="$emit('close')">{{ $t('layers.cancel') }}</button>
+        <button class="accept-btn" @click="$emit('accept')">{{ $t('layers.accept') }}</button>
       </div>
     </div>
   </div>
@@ -73,23 +73,23 @@
   >
     <div class="source-popup" @click.stop>
       <div class="source-popup-header">
-        <h4>Información de la Fuente</h4>
+        <h4>{{ $t('layers.sourceInfo') }}</h4>
         <button class="source-popup-close" @click="closeSourcePopup">
           &times;
         </button>
       </div>
       <div class="source-popup-body">
         <div class="source-popup-section">
-          <strong>Fuente:</strong>
-          <p>{{ layerSources[activePopup]?.source }}</p>
+          <strong>{{ $t('layers.source') }}:</strong>
+          <p>{{ getSourceData(activePopup)?.source }}</p>
         </div>
         <div class="source-popup-section">
-          <strong>Capa:</strong>
-          <p>{{ layerSources[activePopup]?.layer }}</p>
+          <strong>{{ $t('layers.layer') }}:</strong>
+          <p>{{ getSourceData(activePopup)?.layer }}</p>
         </div>
         <div class="source-popup-section">
-          <strong>Temática:</strong>
-          <p>{{ layerSources[activePopup]?.theme }}</p>
+          <strong>{{ $t('layers.theme') }}:</strong>
+          <p>{{ getSourceData(activePopup)?.theme }}</p>
         </div>
       </div>
     </div>
@@ -113,47 +113,6 @@ export default {
   data() {
     return {
       activePopup: null, // Controla qué popup está abierto (solo uno a la vez)
-      layerSources: {
-        "Peligro de inundación": {
-          source: "NASA Worldview",
-          layer:
-            "Global Flood Mortality Risks and Distribution, v1 (2000) → Flood Hazard: Mortality Risk",
-          theme: "Inundaciones",
-        },
-        "Procesos de remoción en masa": {
-          source: "NASA Worldview",
-          layer:
-            "Global Landslide Hazard Distribution, v1 (2000) → Landslide Hazard: Frequency and Distribution",
-          theme: "Procesos de remoción en masa",
-        },
-        "Presencia de Urbanización": {
-          source: "NASA Worldview",
-          layer: "GRUMPv1: Urban Extents Grid, v1 (1995) → Urban Extents",
-          theme: "Presencia de Urbanización",
-        },
-        "Cuerpos de Agua y Cursos Fluviales": {
-          source: "NASA Worldview",
-          layer: "Global 250m Water map (Terra/MODIS, SRTM)",
-          theme: "Presencia de Cuerpos de Agua y Cursos Fluviales",
-        },
-        "Probabilidad de expansión urbana": {
-          source: "NASA Worldview",
-          layer:
-            "Global Grid of Probabilities of Urban Expansion to 2030, v1 (2000-2030) → Probabilities of Urban Expansion to 2030",
-          theme: "Probabilidad de expansión urbana",
-        },
-        Riesgo: {
-          source: "Cálculo Local",
-          layer:
-            "Riesgo calculado: (flood + landslide) × 0.5 × water × (1-urban) × area_protegida",
-          theme: "Índice de riesgo compuesto",
-        },
-        "Áreas protegidas": {
-          source: "IGN (Instituto Geográfico Nacional)",
-          layer: "Área Protegida (archivo shape de polígono)",
-          theme: "Presencia de Áreas Protegidas",
-        },
-      },
     };
   },
   watch: {
@@ -164,11 +123,77 @@ export default {
     },
   },
   methods: {
-    openSourcePopup(layerName) {
-      this.activePopup = layerName;
+    openSourcePopup(layerId) {
+      this.activePopup = layerId;
     },
     closeSourcePopup() {
       this.activePopup = null;
+    },
+    getTranslatedLayerName(layerId) {
+      return this.$t(`layerNames.${layerId}`);
+    },
+    getSourceData(layerId) {
+      // Verificar que tenemos un layerId válido
+      if (!layerId) {
+        return null;
+      }
+
+      // Intentar acceder directamente a las traducciones de Vue i18n
+      try {
+        // Acceder usando notación de punto
+        const sources = this.$t('sources');
+        if (sources && sources[layerId]) {
+          const data = sources[layerId];
+          if (data && data.source && data.layer && data.theme) {
+            return data;
+          }
+        }
+      } catch (error) {
+        console.warn('Error accessing sources translations:', error);
+      }
+
+      // Si las traducciones no funcionan, usar datos hardcodeados según el idioma actual
+      const isEnglish = this.$i18n.locale === 'en';
+
+      const fallbackData = {
+        flood: {
+          source: 'NASA Worldview',
+          layer: isEnglish ? 'Global Flood Mortality Risks and Distribution, v1 (2000) → Flood Hazard: Mortality Risk' : 'Global Flood Mortality Risks and Distribution, v1 (2000) → Flood Hazard: Mortality Risk',
+          theme: isEnglish ? 'Flooding' : 'Inundaciones'
+        },
+        landslide: {
+          source: 'NASA Worldview',
+          layer: isEnglish ? 'Global Landslide Hazard Distribution, v1 (2000) → Landslide Hazard: Frequency and Distribution' : 'Global Landslide Hazard Distribution, v1 (2000) → Landslide Hazard: Frequency and Distribution',
+          theme: isEnglish ? 'Mass movement processes' : 'Procesos de remoción en masa'
+        },
+        urban: {
+          source: 'NASA Worldview',
+          layer: isEnglish ? 'GRUMPv1: Urban Extents Grid, v1 (1995) → Urban Extents' : 'GRUMPv1: Urban Extents Grid, v1 (1995) → Urban Extents',
+          theme: isEnglish ? 'Urban Presence' : 'Presencia de Urbanización'
+        },
+        water: {
+          source: 'NASA Worldview',
+          layer: isEnglish ? 'Global 250m Water map (Terra/MODIS, SRTM)' : 'Global 250m Water map (Terra/MODIS, SRTM)',
+          theme: isEnglish ? 'Presence of Water Bodies and Rivers' : 'Presencia de Cuerpos de Agua y Cursos Fluviales'
+        },
+        expansion: {
+          source: 'NASA Worldview',
+          layer: isEnglish ? 'Global Grid of Probabilities of Urban Expansion to 2030, v1 (2000-2030) → Probabilities of Urban Expansion to 2030' : 'Global Grid of Probabilities of Urban Expansion to 2030, v1 (2000-2030) → Probabilities of Urban Expansion to 2030',
+          theme: isEnglish ? 'Urban expansion probability' : 'Probabilidad de expansión urbana'
+        },
+        risk: {
+          source: isEnglish ? 'Local Calculation' : 'Cálculo Local',
+          layer: isEnglish ? 'Calculated risk: (flood + landslide) × 0.5 × water × (1-urban) × protected_area' : 'Riesgo calculado: (flood + landslide) × 0.5 × water × (1-urban) × area_protegida',
+          theme: isEnglish ? 'Composite risk index' : 'Índice de riesgo compuesto'
+        },
+        protected: {
+          source: isEnglish ? 'IGN (National Geographic Institute)' : 'IGN (Instituto Geográfico Nacional)',
+          layer: isEnglish ? 'Protected Area (polygon shape file)' : 'Área Protegida (archivo shape de polígono)',
+          theme: isEnglish ? 'Presence of Protected Areas' : 'Presencia de Áreas Protegidas'
+        }
+      };
+
+      return fallbackData[layerId] || { source: 'N/A', layer: 'N/A', theme: 'N/A' };
     },
   },
 };
