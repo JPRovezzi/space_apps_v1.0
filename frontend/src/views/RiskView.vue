@@ -161,8 +161,8 @@ export default {
   },
   data() {
     return {
-      IMAGE_WIDTH: 978,
-      IMAGE_HEIGHT: 1296,
+      BASE_IMAGE_WIDTH: 978,
+      BASE_IMAGE_HEIGHT: 1296,
       currentBackground: "marble", // marble por defecto
       customColor: "#ffffff",
       colors: COLORS,
@@ -207,6 +207,44 @@ export default {
     };
   },
   computed: {
+    // Dimensiones responsive del contenedor
+    IMAGE_WIDTH() {
+      if (typeof window === 'undefined') return this.BASE_IMAGE_WIDTH;
+
+      const isMobile = window.innerWidth <= 768;
+      const isSmallMobile = window.innerWidth <= 480;
+
+      if (isSmallMobile) {
+        // En móviles pequeños, usar el ancho disponible menos padding
+        return Math.min(window.innerWidth - 16, this.BASE_IMAGE_WIDTH);
+      } else if (isMobile) {
+        // En tablets, usar el ancho disponible menos padding
+        return Math.min(window.innerWidth - 32, this.BASE_IMAGE_WIDTH);
+      } else {
+        // En desktop, usar el tamaño base
+        return this.BASE_IMAGE_WIDTH;
+      }
+    },
+
+    IMAGE_HEIGHT() {
+      if (typeof window === 'undefined') return this.BASE_IMAGE_HEIGHT;
+
+      const isMobile = window.innerWidth <= 768;
+      const isSmallMobile = window.innerWidth <= 480;
+
+      // Usar las mismas proporciones que las aspect-ratio de CSS
+      let aspectRatio;
+      if (isSmallMobile) {
+        aspectRatio = 4 / 3; // aspect-ratio: 3/4 invertido para calcular height/width
+      } else if (isMobile) {
+        aspectRatio = 5 / 4; // aspect-ratio: 4/5 invertido para calcular height/width
+      } else {
+        aspectRatio = this.BASE_IMAGE_HEIGHT / this.BASE_IMAGE_WIDTH; // Relación original
+      }
+
+      return Math.round(this.IMAGE_WIDTH * aspectRatio);
+    },
+
     // Capas con nombres traducidos
     layers() {
       return this.layersBase.map(layer => ({
@@ -275,16 +313,24 @@ export default {
     },
 
     handleLayerToggle({ layerId, layer }) {
-      const layerToUpdate = this.layers.find((l) => l.id === layerId);
+      const layerToUpdate = this.layersBase.find((l) => l.id === layerId);
       if (layerToUpdate) {
         layerToUpdate.active = layer.active;
+        // Forzar actualización para móviles
+        this.$nextTick(() => {
+          this.$forceUpdate();
+        });
       }
     },
 
     handleLayerOpacityChange({ layerId, layer }) {
-      const layerToUpdate = this.layers.find((l) => l.id === layerId);
+      const layerToUpdate = this.layersBase.find((l) => l.id === layerId);
       if (layerToUpdate) {
         layerToUpdate.opacity = layer.opacity;
+        // Forzar actualización para móviles
+        this.$nextTick(() => {
+          this.$forceUpdate();
+        });
       }
     },
 
@@ -467,6 +513,13 @@ export default {
         this.showCoordinates = true;
       }
     },
+
+    handleResize() {
+      // Forzar recalculación de computed properties responsive
+      this.$nextTick(() => {
+        this.$forceUpdate();
+      });
+    },
   },
   mounted() {
     // Scroll to top when component is loaded
@@ -475,7 +528,16 @@ export default {
       left: 0,
       behavior: 'smooth'
     });
+
+    // Agregar listener para cambios de tamaño de ventana
+    this.handleResize = this.handleResize.bind(this);
+    window.addEventListener('resize', this.handleResize);
   },
+
+  beforeUnmount() {
+    // Limpiar listener cuando se desmonte el componente
+    window.removeEventListener('resize', this.handleResize);
+  }
 };
 </script>
 

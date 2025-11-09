@@ -1,5 +1,5 @@
 export default {
-  title: "Select Background Color",
+  title: "Select background color",
   labels: {
     r: "R:",
     g: "G:",

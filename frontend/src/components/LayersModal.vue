@@ -217,7 +217,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1200;
 }
 
 .color-modal {
@@ -453,7 +453,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1100;
+  z-index: 1300;
 }
 
 .source-popup {
