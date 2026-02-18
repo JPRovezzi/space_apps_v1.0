@@ -1,6 +1,12 @@
 # Astrochingolo - Análisis de riesgos para ciudades del hoy y del mañana
 
-Plataforma web innovadora que combina datos satelitales de NASA con análisis geoespacial avanzado para evaluar riesgos ambientales en la expansión urbana de la provincia de Córdoba, Argentina. Desarrollada para NASA Space Apps Challenge Córdoba 2025. Puede ver una vista previa del proyecto en: https://lovely-chebakia-bf37e1.netlify.app/
+Plataforma web innovadora que combina datos satelitales de NASA con análisis geoespacial avanzado para evaluar riesgos ambientales en la expansión urbana de la provincia de Córdoba, Argentina. Desarrollada para NASA Space Apps Challenge Córdoba 2025. Puede ver una vista previa del proyecto en: 
+
+Última versión:
+https://jprovezzi.github.io/space_apps_v1.0/#/
+
+Versión del challenge:
+https://lovely-chebakia-bf37e1.netlify.app/
 
 ## 🚀 ¿Qué hace Astrochingolo?
 
